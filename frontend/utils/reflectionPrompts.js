@@ -45,7 +45,24 @@ class ReflectionPromptManager {
       "I'd love to understand your current emotional experience. How are you?",
       "Let's take stock of your feelings. What's your mood like?",
       "Your emotional well-being is important. How are you doing?",
-      "Let's check in on your heart and mind. How are you feeling?"
+      "Let's check in on your heart and mind. How are you feeling?",
+      
+      // Additional diverse prompts for more variety
+      "What's your emotional weather like today? Sunny, cloudy, or stormy?",
+      "Let's take a moment to tune into your inner voice. How are you?",
+      "Your emotional journey matters. What's your current chapter like?",
+      "Let's pause and honor your feelings. How are you doing?",
+      "I'm here to witness your emotional experience. How are you?",
+      "Let's create space for your feelings. What's present for you?",
+      "Your emotional landscape is unique. How does it look today?",
+      "Let's gently explore your current state. How are you feeling?",
+      "I want to understand your emotional world. How are you?",
+      "Let's take a mindful moment together. How are you doing?",
+      "Your feelings deserve attention. What's your current experience?",
+      "Let's connect with your emotional truth. How are you?",
+      "I'm curious about your inner world. How are you feeling?",
+      "Let's honor your emotional reality. How are you doing?",
+      "Your emotional well-being is precious. How are you today?"
     ];
     
     this.usedPrompts = [];
@@ -55,17 +72,14 @@ class ReflectionPromptManager {
   }
 
   getNextPrompt() {
-    const now = Date.now();
-    
-    // Filter out recently used prompts
+    // Filter out recently used prompts (only last 4)
     const availablePrompts = this.prompts.filter(prompt => 
       !this.usedPrompts.includes(prompt)
     );
     
-    // If all prompts have been used recently, reset the history
+    // If all prompts have been used recently, reset the history immediately
     if (availablePrompts.length === 0) {
       this.usedPrompts = [];
-      this.lastPromptTime = now;
       return this.prompts[Math.floor(Math.random() * this.prompts.length)];
     }
     
@@ -74,7 +88,6 @@ class ReflectionPromptManager {
     
     // Add to used history
     this.usedPrompts.push(selectedPrompt);
-    this.lastPromptTime = now;
     
     // Keep only the last maxHistory items
     if (this.usedPrompts.length > this.maxHistory) {
@@ -154,7 +167,6 @@ class ReflectionPromptManager {
   // Reset the rotation system
   reset() {
     this.usedPrompts = [];
-    this.lastPromptTime = null;
     this.notifyReset();
   }
 
@@ -164,8 +176,7 @@ class ReflectionPromptManager {
       totalPrompts: this.prompts.length,
       usedPrompts: this.usedPrompts.length,
       availablePrompts: this.prompts.length - this.usedPrompts.length,
-      recentlyUsed: [...this.usedPrompts],
-      lastPromptTime: this.lastPromptTime
+      recentlyUsed: [...this.usedPrompts]
     };
   }
 
@@ -177,13 +188,9 @@ class ReflectionPromptManager {
     return `${used}${available}`;
   }
 
-  // Check if we should reset prompts (e.g., after a long break)
+  // Check if we should reset prompts (always allow reset)
   shouldReset() {
-    if (!this.lastPromptTime) return false;
-    const now = Date.now();
-    const timeSinceLastPrompt = now - this.lastPromptTime;
-    // Reset if it's been more than 30 minutes
-    return timeSinceLastPrompt > 1800000;
+    return true; // Always allow reset for immediate prompt generation
   }
 
   // Set a callback for when prompts are reset
@@ -204,10 +211,7 @@ const promptManager = new ReflectionPromptManager();
 
 // Export the main function that gets the next prompt
 export function getReflectionPrompt() {
-  // Auto-reset if it's been a long time
-  if (promptManager.shouldReset()) {
-    promptManager.reset();
-  }
+  // Always allow prompt generation without time restrictions
   return promptManager.getNextPrompt();
 }
 
