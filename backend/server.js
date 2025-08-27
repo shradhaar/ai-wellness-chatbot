@@ -1285,8 +1285,9 @@ app.post('/chat', async (req, res) => {
     console.log('User Location:', userLocation);
     console.log('User ID:', userId);
     
-    // Get or create user data
-    let userInfo = userData.get(userId);
+    // Get or create user data - use userName as primary key if available, otherwise use userId
+    const userKey = userName || userId;
+    let userInfo = userData.get(userKey);
     if (!userInfo) {
       userInfo = {
         name: userName || null,
@@ -1319,7 +1320,7 @@ app.post('/chat', async (req, res) => {
           culturalBackground: userLocation || ''
         }
       };
-      userData.set(userId, userInfo);
+      userData.set(userKey, userInfo);
     }
     
     // Update user info
@@ -1341,6 +1342,9 @@ app.post('/chat', async (req, res) => {
       userInfo.emotionalProfile.culturalBackground = userLocation;
       console.log('Stored new user location:', userLocation);
     }
+    
+    // Update the user data in storage with the new key
+    userData.set(userKey, userInfo);
     
     // Debug: Log current user info
     console.log('Current user info:', {
@@ -1412,12 +1416,19 @@ app.post('/chat', async (req, res) => {
       console.log('Gemini API failed, falling back to rule-based system:', error.message);
       
       // Fallback to rule-based system if Gemini fails
-      if (userInfo.relationship === 'new' && userInfo.conversationCount <= 5 && !userInfo.name) {
-        // Only use getting-to-know-you if user doesn't have a name yet
+      // Check if user has completed onboarding (has stored name, age, gender, location)
+      const hasCompletedOnboarding = userInfo.name && userInfo.age && userInfo.gender && userInfo.location;
+      
+      if (userInfo.relationship === 'new' && userInfo.conversationCount <= 5 && !hasCompletedOnboarding) {
+        // Only use getting-to-know-you if user hasn't completed onboarding
         response = handleGettingToKnowYou(message, userName, userInfo, message.toLowerCase(), userName ? `, ${userName}` : '');
         userInfo.conversationCount++;
       } else {
-        // User already has a name or is established, use regular conversation
+        // User has completed onboarding or is established, use regular conversation
+        // Skip the getting-to-know-you flow entirely for users who have completed onboarding
+        if (hasCompletedOnboarding) {
+          userInfo.relationship = 'acquainted'; // Mark as acquainted since they've completed onboarding
+        }
         response = handleRegularConversationWithMood(message, userName, userInfo, message.toLowerCase(), moodDetection, userId);
         userInfo.conversationCount++;
       }
