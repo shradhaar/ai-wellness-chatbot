@@ -10,7 +10,13 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
   
   // Analyze conversation sentiment when conversation changes
   useEffect(() => {
-    if (conversationHistory.length > 0 || currentMessage) {
+    // If we have an explicit mood (like from mood buttons), use that
+    if (mood && mood !== 'neutral' && mood !== 'reflection') {
+      setAnalyzedMood(mood);
+      // Don't set sentimentEmoji here - let the moodConfig handle it
+    } 
+    // Otherwise, analyze conversation sentiment for dynamic emoji changes
+    else if (conversationHistory.length > 0 || currentMessage) {
       const sentiment = analyzeConversationSentiment(conversationHistory, currentMessage);
       setAnalyzedMood(sentiment.emotion);
       setSentimentEmoji(sentiment.emoji);
@@ -24,35 +30,35 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
   const moodConfig = {
     // Positive emotions
     happy: {
-      emoji: sentimentEmoji,
+      emoji: '😊',
       color: '#4CAF50',
       bgColor: '#E8F5E8',
       borderColor: '#4CAF50',
       animation: 'bounce'
     },
     grateful: {
-      emoji: sentimentEmoji,
+      emoji: '🙏',
       color: '#9C27B0',
       bgColor: '#F3E5F5',
       borderColor: '#9C27B0',
       animation: 'pulse'
     },
     confident: {
-      emoji: sentimentEmoji,
+      emoji: '💪',
       color: '#FF9800',
       bgColor: '#FFF3E0',
       borderColor: '#FF9800',
       animation: 'pulse'
     },
     peaceful: {
-      emoji: sentimentEmoji,
+      emoji: '😌',
       color: '#4CAF50',
       bgColor: '#E8F5E8',
       borderColor: '#4CAF50',
       animation: 'fade'
     },
     creative: {
-      emoji: sentimentEmoji,
+      emoji: '🎨',
       color: '#00BCD4',
       bgColor: '#E0F2F1',
       borderColor: '#00BCD4',
@@ -61,72 +67,93 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
     
     // Negative emotions
     sad: {
-      emoji: sentimentEmoji,
+      emoji: '😔',
       color: '#2196F3',
       bgColor: '#E3F2FD',
       borderColor: '#2196F3',
       animation: 'fade'
     },
     angry: {
-      emoji: sentimentEmoji,
+      emoji: '😠',
       color: '#F44336',
       bgColor: '#FFEBEE',
       borderColor: '#F44336',
       animation: 'shake'
     },
     anxious: {
-      emoji: sentimentEmoji,
+      emoji: '😰',
       color: '#9C27B0',
       bgColor: '#F3E5F5',
       borderColor: '#9C27B0',
       animation: 'shake'
     },
     tired: {
-      emoji: sentimentEmoji,
+      emoji: '😴',
       color: '#607D8B',
       bgColor: '#ECEFF1',
       borderColor: '#607D8B',
       animation: 'fade'
     },
     lonely: {
-      emoji: sentimentEmoji,
+      emoji: '😔',
       color: '#795548',
       bgColor: '#EFEBE9',
       borderColor: '#795548',
       animation: 'fade'
     },
     overwhelmed: {
-      emoji: sentimentEmoji,
+      emoji: '😵‍💫',
       color: '#E91E63',
       bgColor: '#FCE4EC',
       borderColor: '#E91E63',
       animation: 'shake'
     },
+    energized: {
+      emoji: '⚡',
+      color: '#FFD54F',
+      bgColor: '#FFF8E1',
+      borderColor: '#FFD54F',
+      animation: 'bounce'
+    },
+    connected: {
+      emoji: '💫',
+      color: '#4FC3F7',
+      bgColor: '#E1F5FE',
+      borderColor: '#4FC3F7',
+      animation: 'pulse'
+    },
+    needingSupport: {
+      emoji: '🆘',
+      color: '#F06292',
+      bgColor: '#FCE4EC',
+      borderColor: '#F06292',
+      animation: 'shake'
+    },
     
     // Neutral/Complex emotions
     contemplative: {
-      emoji: sentimentEmoji,
+      emoji: '🤔',
       color: '#795548',
       bgColor: '#EFEBE9',
       borderColor: '#795548',
       animation: 'pulse'
     },
     uncertain: {
-      emoji: sentimentEmoji,
+      emoji: '🤷',
       color: '#FF9800',
       bgColor: '#FFF3E0',
       borderColor: '#FF9800',
       animation: 'pulse'
     },
     neutral: {
-      emoji: sentimentEmoji,
+      emoji: '😐',
       color: '#757575',
       bgColor: '#F5F5F5',
       borderColor: '#757575',
       animation: 'none'
     },
     reflection: {
-      emoji: sentimentEmoji,
+      emoji: '🤔',
       color: '#795548',
       bgColor: '#EFEBE9',
       borderColor: '#795548',
@@ -135,6 +162,9 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
   };
 
   const currentMood = moodConfig[analyzedMood] || moodConfig.neutral;
+  
+  // Use the moodConfig emoji if available, otherwise fall back to sentimentEmoji
+  const displayEmoji = currentMood.emoji || sentimentEmoji;
 
   if (Platform.OS === 'web') {
     // Enhanced web avatar with better styling and mood-based animations
@@ -169,7 +199,7 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
             color: currentMood.color,
             textShadow: '1px 1px 2px rgba(0,0,0,0.1)',
           }}>
-            {currentMood.emoji}
+            {displayEmoji}
           </span>
         </div>
         <div style={{
@@ -187,7 +217,7 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
             color: currentMood.color,
             textTransform: 'capitalize',
           }}>
-            {mood.charAt(0).toUpperCase() + mood.slice(1)}
+            {analyzedMood.charAt(0).toUpperCase() + analyzedMood.slice(1)}
           </span>
         </div>
       </div>
@@ -225,7 +255,7 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
             styles.moodText,
             { color: currentMood.color }
           ]}>
-            {mood.charAt(0).toUpperCase() + mood.slice(1)}
+            {analyzedMood.charAt(0).toUpperCase() + analyzedMood.slice(1)}
           </Text>
         </View>
       </View>
@@ -251,7 +281,7 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
             styles.emoji,
             { color: currentMood.color }
           ]}>
-            {currentMood.emoji}
+            {displayEmoji}
           </Text>
         </View>
         <View style={styles.moodIndicator}>
@@ -259,7 +289,7 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
             styles.moodText,
             { color: currentMood.color }
           ]}>
-            {mood.charAt(0).toUpperCase() + mood.slice(1)}
+            {analyzedMood.charAt(0).toUpperCase() + analyzedMood.slice(1)}
           </Text>
         </View>
       </View>
