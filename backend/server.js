@@ -1217,10 +1217,10 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   // Varied mood check-in logic
   if (userInfo.moodHistory.length > 0 && userInfo.moodHistory.length % 3 === 0) {
     const moodQuestions = [
-      `How are you feeling right now${currentNameCall}? I want to make sure you're doing okay.`,
-      `I'm curious - how's your mood today${currentNameCall}?`,
-      `Before we continue, how are you really feeling${currentNameCall}?`,
-      `I want to check in - how are you doing emotionally${currentNameCall}?`
+      `How are you feeling${currentNameCall}?`,
+      `How's your mood today${currentNameCall}?`,
+      `How are you doing${currentNameCall}?`,
+      `You okay${currentNameCall}?`
     ];
     moodCheckinQuestion = moodQuestions[Math.floor(Math.random() * moodQuestions.length)];
   }
@@ -1230,22 +1230,22 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   
   // Check for specific questions or topics
   if (lowerMessage.includes('name') || lowerMessage.includes('call me') || lowerMessage.includes('who am i')) {
-    baseResponse = `Your name is ${currentName}${currentNameCall}! You're ${userInfo.age} years old, identify as ${userInfo.gender}, and you're from ${userInfo.location}. I remember all of that from when we first met! 🌙`;
+    baseResponse = `Your name is ${currentName}${currentNameCall}! You're ${userInfo.age}, ${userInfo.gender}, from ${userInfo.location}. I remember! 🌙`;
   } else if (lowerMessage.includes('water polo') || lowerMessage.includes('game') || lowerMessage.includes('sport')) {
-    baseResponse = `That's amazing${currentNameCall}! Water polo is such an exciting sport. I can tell you're really passionate about it. Tell me more about your game - how did it go?`;
+    baseResponse = `Water polo is awesome${currentNameCall}! Tell me about your game - how did it go?`;
   } else if (lowerMessage.includes('feeling') || lowerMessage.includes('mood') || lowerMessage.includes('sad') || lowerMessage.includes('happy')) {
-    baseResponse = `I can sense how you're feeling${currentNameCall}. It's completely normal to have ups and downs. I'm here to listen and support you through whatever you're experiencing.`;
+    baseResponse = `I hear you${currentNameCall}. What's going on? I'm here to listen.`;
   } else if (lowerMessage.includes('school') || lowerMessage.includes('study') || lowerMessage.includes('class')) {
-    baseResponse = `School can be challenging${currentNameCall}, especially at your age. I'm here to help you navigate through it. What's going on with school?`;
+    baseResponse = `School can be tough${currentNameCall}. What's happening? I'm here to help.`;
   } else if (userInfo.relationship === 'acquainted') {
     baseResponse = getPersonalizedResponse(message, currentName, userInfo, lowerMessage, currentNameCall, userId);
   } else {
     // Varied responses for new users
     const responses = [
-      `Hi${currentNameCall}! I'm here to listen and support you. What's on your mind today?`,
-      `Hello${currentNameCall}! I'm Luna, and I'm excited to get to know you better. What would you like to talk about?`,
-      `Welcome${currentNameCall}! I'm here to be your wellness companion. How are you doing today?`,
-      `Hi there${currentNameCall}! I'm Luna 🌙 and I'm genuinely interested in hearing about your day. What's happening?`
+      `Hi${currentNameCall}! What's on your mind today?`,
+      `Hello${currentNameCall}! I'm Luna. What would you like to talk about?`,
+      `Welcome${currentNameCall}! How are you doing?`,
+      `Hi there${currentNameCall}! I'm Luna 🌙. What's happening?`
     ];
     baseResponse = responses[Math.floor(Math.random() * responses.length)];
   }
@@ -1437,7 +1437,7 @@ app.post('/chat', async (req, res) => {
             temperature: 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 800
+            maxOutputTokens: 300
           }
         }
       );
@@ -1558,6 +1558,8 @@ Your conversation style should be:
 - Reference shared interests and previous conversations naturally
 - Ask thoughtful follow-up questions that show you're listening
 - Be present and supportive, not trying to "fix" problems
+- Keep responses concise (2-3 sentences max) - no walls of text!
+- Be direct and to the point while maintaining warmth
 
 Current conversation context:
 - User: ${name}
