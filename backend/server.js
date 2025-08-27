@@ -3,6 +3,11 @@ const axios = require('axios');
 const cors = require('cors');
 require('dotenv').config();
 
+// Set Gemini API key if not in environment
+if (!process.env.GEMINI_API_KEY) {
+  process.env.GEMINI_API_KEY = 'AIzaSyBkrkMCwneeuXymryoHMilvN2ErWaHP428';
+}
+
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -1207,20 +1212,42 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   // Get user context for response management (simplified)
   const context = { messageCount: userInfo.moodHistory.length || 0 };
   
-  // Check if we should ask for a mood check-in (simplified)
+  // Check if we should ask for a mood check-in (varied)
   let moodCheckinQuestion = '';
-  // Simple mood check-in logic
+  // Varied mood check-in logic
   if (userInfo.moodHistory.length > 0 && userInfo.moodHistory.length % 3 === 0) {
-    moodCheckinQuestion = `How are you feeling right now${currentNameCall}? I want to make sure you're doing okay.`;
+    const moodQuestions = [
+      `How are you feeling right now${currentNameCall}? I want to make sure you're doing okay.`,
+      `I'm curious - how's your mood today${currentNameCall}?`,
+      `Before we continue, how are you really feeling${currentNameCall}?`,
+      `I want to check in - how are you doing emotionally${currentNameCall}?`
+    ];
+    moodCheckinQuestion = moodQuestions[Math.floor(Math.random() * moodQuestions.length)];
   }
   
-  // Get base response based on relationship level
+  // Get base response based on relationship level and message content
   let baseResponse;
-  if (userInfo.relationship === 'acquainted') {
+  
+  // Check for specific questions or topics
+  if (lowerMessage.includes('name') || lowerMessage.includes('call me') || lowerMessage.includes('who am i')) {
+    baseResponse = `Your name is ${currentName}${currentNameCall}! You're ${userInfo.age} years old, identify as ${userInfo.gender}, and you're from ${userInfo.location}. I remember all of that from when we first met! 🌙`;
+  } else if (lowerMessage.includes('water polo') || lowerMessage.includes('game') || lowerMessage.includes('sport')) {
+    baseResponse = `That's amazing${currentNameCall}! Water polo is such an exciting sport. I can tell you're really passionate about it. Tell me more about your game - how did it go?`;
+  } else if (lowerMessage.includes('feeling') || lowerMessage.includes('mood') || lowerMessage.includes('sad') || lowerMessage.includes('happy')) {
+    baseResponse = `I can sense how you're feeling${currentNameCall}. It's completely normal to have ups and downs. I'm here to listen and support you through whatever you're experiencing.`;
+  } else if (lowerMessage.includes('school') || lowerMessage.includes('study') || lowerMessage.includes('class')) {
+    baseResponse = `School can be challenging${currentNameCall}, especially at your age. I'm here to help you navigate through it. What's going on with school?`;
+  } else if (userInfo.relationship === 'acquainted') {
     baseResponse = getPersonalizedResponse(message, currentName, userInfo, lowerMessage, currentNameCall, userId);
   } else {
-    // Simple fallback response for new users
-    baseResponse = `Hi${currentNameCall}! I'm here to listen and support you. What's on your mind today?`;
+    // Varied responses for new users
+    const responses = [
+      `Hi${currentNameCall}! I'm here to listen and support you. What's on your mind today?`,
+      `Hello${currentNameCall}! I'm Luna, and I'm excited to get to know you better. What would you like to talk about?`,
+      `Welcome${currentNameCall}! I'm here to be your wellness companion. How are you doing today?`,
+      `Hi there${currentNameCall}! I'm Luna 🌙 and I'm genuinely interested in hearing about your day. What's happening?`
+    ];
+    baseResponse = responses[Math.floor(Math.random() * responses.length)];
   }
   
   // For severe distress, use specialized gentle responses
@@ -1228,12 +1255,24 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
     baseResponse = `I can sense you're going through something really difficult${currentNameCall}. I'm here with you, and it's okay to not be okay. Would you like to talk about what's happening?`;
   }
   
-  // Simple tone adaptation based on mood
+  // Varied tone adaptation based on mood
   let adaptedResponse = baseResponse;
   if (mood === 'sad' || mood === 'anxious') {
-    adaptedResponse = `I hear you${currentNameCall}. ${baseResponse}`;
+    const sadPrefixes = [
+      `I hear you${currentNameCall}. `,
+      `I understand${currentNameCall}. `,
+      `I'm here with you${currentNameCall}. `,
+      `I can sense that${currentNameCall}. `
+    ];
+    adaptedResponse = sadPrefixes[Math.floor(Math.random() * sadPrefixes.length)] + baseResponse;
   } else if (mood === 'happy' || mood === 'excited') {
-    adaptedResponse = `That's wonderful${currentNameCall}! ${baseResponse}`;
+    const happyPrefixes = [
+      `That's wonderful${currentNameCall}! `,
+      `I'm so glad to hear that${currentNameCall}! `,
+      `That sounds amazing${currentNameCall}! `,
+      `I love your energy${currentNameCall}! `
+    ];
+    adaptedResponse = happyPrefixes[Math.floor(Math.random() * happyPrefixes.length)] + baseResponse;
   }
   
   // Ensure the response is gentle and non-judgmental
@@ -1447,9 +1486,11 @@ app.post('/chat', async (req, res) => {
     
     // Ensure response is properly defined before processing
     if (!response || !response.reply) {
-      console.log('Response is undefined or missing reply, using fallback');
+      console.log('Response is undefined or missing reply, using improved fallback');
+      // Use the improved response logic instead of hardcoded fallback
+      const fallbackResponse = handleRegularConversationWithMood(message, userName, userInfo, message.toLowerCase(), moodDetection, userId);
       response = {
-        reply: "I'm here to listen and support you. Could you tell me more about what's on your mind?",
+        reply: fallbackResponse,
         mood: mood,
         topics: [],
         emotionalIntensity: intensity,
