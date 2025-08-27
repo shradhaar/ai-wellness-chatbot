@@ -1230,21 +1230,21 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   
   // Check for specific questions or topics
   if (lowerMessage.includes('name') || lowerMessage.includes('call me') || lowerMessage.includes('who am i')) {
-    baseResponse = `Your name is ${currentName}${currentNameCall}! You're ${userInfo.age}, ${userInfo.gender}, from ${userInfo.location}. I remember! 🌙`;
+    baseResponse = `You're ${currentName}${currentNameCall}! ${userInfo.age}, ${userInfo.gender}, ${userInfo.location}. I remember! 🌙`;
   } else if (lowerMessage.includes('water polo') || lowerMessage.includes('game') || lowerMessage.includes('sport')) {
-    baseResponse = `Water polo is awesome${currentNameCall}! Tell me about your game - how did it go?`;
+    baseResponse = `Water polo is awesome${currentNameCall}! How was your game?`;
   } else if (lowerMessage.includes('feeling') || lowerMessage.includes('mood') || lowerMessage.includes('sad') || lowerMessage.includes('happy')) {
-    baseResponse = `I hear you${currentNameCall}. What's going on? I'm here to listen.`;
+    baseResponse = `I hear you${currentNameCall}. What's going on?`;
   } else if (lowerMessage.includes('school') || lowerMessage.includes('study') || lowerMessage.includes('class')) {
-    baseResponse = `School can be tough${currentNameCall}. What's happening? I'm here to help.`;
+    baseResponse = `School can be tough${currentNameCall}. What's happening?`;
   } else if (userInfo.relationship === 'acquainted') {
     baseResponse = getPersonalizedResponse(message, currentName, userInfo, lowerMessage, currentNameCall, userId);
   } else {
     // Varied responses for new users
     const responses = [
-      `Hi${currentNameCall}! What's on your mind today?`,
-      `Hello${currentNameCall}! I'm Luna. What would you like to talk about?`,
-      `Welcome${currentNameCall}! How are you doing?`,
+      `Hi${currentNameCall}! What's on your mind?`,
+      `Hello${currentNameCall}! I'm Luna. What's up?`,
+      `Welcome${currentNameCall}! How are you?`,
       `Hi there${currentNameCall}! I'm Luna 🌙. What's happening?`
     ];
     baseResponse = responses[Math.floor(Math.random() * responses.length)];
@@ -1437,7 +1437,7 @@ app.post('/chat', async (req, res) => {
             temperature: 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 300
+            maxOutputTokens: 150
           }
         }
       );
@@ -1558,8 +1558,9 @@ Your conversation style should be:
 - Reference shared interests and previous conversations naturally
 - Ask thoughtful follow-up questions that show you're listening
 - Be present and supportive, not trying to "fix" problems
-- Keep responses concise (2-3 sentences max) - no walls of text!
+- Keep responses very concise (1-2 sentences max) - be brief and impactful!
 - Be direct and to the point while maintaining warmth
+- No long explanations or multiple paragraphs
 
 Current conversation context:
 - User: ${name}
