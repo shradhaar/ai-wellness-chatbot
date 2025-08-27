@@ -1,55 +1,132 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import './AvatarAnimations.css';
+import { analyzeConversationSentiment, getEmojiForEmotion } from '../utils/sentimentAnalyzer';
 
-export default function LottieAvatar({ mood = 'neutral' }) {
-  // Enhanced mood mapping with more expressions
+export default function LottieAvatar({ mood = 'neutral', conversationHistory = [], currentMessage = '' }) {
+  const [analyzedMood, setAnalyzedMood] = useState(mood);
+  const [sentimentEmoji, setSentimentEmoji] = useState('😐');
+  
+  // Analyze conversation sentiment when conversation changes
+  useEffect(() => {
+    if (conversationHistory.length > 0 || currentMessage) {
+      const sentiment = analyzeConversationSentiment(conversationHistory, currentMessage);
+      setAnalyzedMood(sentiment.emotion);
+      setSentimentEmoji(sentiment.emoji);
+    } else {
+      setAnalyzedMood(mood);
+      setSentimentEmoji(getEmojiForEmotion(mood));
+    }
+  }, [conversationHistory, currentMessage, mood]);
+  
+  // Use analyzed mood for configuration
   const moodConfig = {
+    // Positive emotions
     happy: {
-      emoji: '😊',
+      emoji: sentimentEmoji,
       color: '#4CAF50',
       bgColor: '#E8F5E8',
       borderColor: '#4CAF50',
       animation: 'bounce'
     },
-    sad: {
-      emoji: '😔',
-      color: '#2196F3',
-      bgColor: '#E3F2FD',
-      borderColor: '#2196F3',
-      animation: 'fade'
+    grateful: {
+      emoji: sentimentEmoji,
+      color: '#9C27B0',
+      bgColor: '#F3E5F5',
+      borderColor: '#9C27B0',
+      animation: 'pulse'
     },
-    excited: {
-      emoji: '🤩',
+    confident: {
+      emoji: sentimentEmoji,
       color: '#FF9800',
       bgColor: '#FFF3E0',
       borderColor: '#FF9800',
       animation: 'pulse'
     },
+    peaceful: {
+      emoji: sentimentEmoji,
+      color: '#4CAF50',
+      bgColor: '#E8F5E8',
+      borderColor: '#4CAF50',
+      animation: 'fade'
+    },
+    creative: {
+      emoji: sentimentEmoji,
+      color: '#00BCD4',
+      bgColor: '#E0F2F1',
+      borderColor: '#00BCD4',
+      animation: 'bounce'
+    },
+    
+    // Negative emotions
+    sad: {
+      emoji: sentimentEmoji,
+      color: '#2196F3',
+      bgColor: '#E3F2FD',
+      borderColor: '#2196F3',
+      animation: 'fade'
+    },
+    angry: {
+      emoji: sentimentEmoji,
+      color: '#F44336',
+      bgColor: '#FFEBEE',
+      borderColor: '#F44336',
+      animation: 'shake'
+    },
     anxious: {
-      emoji: '😰',
+      emoji: sentimentEmoji,
       color: '#9C27B0',
       bgColor: '#F3E5F5',
       borderColor: '#9C27B0',
       animation: 'shake'
     },
     tired: {
-      emoji: '😴',
+      emoji: sentimentEmoji,
       color: '#607D8B',
       bgColor: '#ECEFF1',
       borderColor: '#607D8B',
       animation: 'fade'
     },
+    lonely: {
+      emoji: sentimentEmoji,
+      color: '#795548',
+      bgColor: '#EFEBE9',
+      borderColor: '#795548',
+      animation: 'fade'
+    },
+    overwhelmed: {
+      emoji: sentimentEmoji,
+      color: '#E91E63',
+      bgColor: '#FCE4EC',
+      borderColor: '#E91E63',
+      animation: 'shake'
+    },
+    
+    // Neutral/Complex emotions
+    contemplative: {
+      emoji: sentimentEmoji,
+      color: '#795548',
+      bgColor: '#EFEBE9',
+      borderColor: '#795548',
+      animation: 'pulse'
+    },
+    uncertain: {
+      emoji: sentimentEmoji,
+      color: '#FF9800',
+      bgColor: '#FFF3E0',
+      borderColor: '#FF9800',
+      animation: 'pulse'
+    },
     neutral: {
-      emoji: '😐',
+      emoji: sentimentEmoji,
       color: '#757575',
       bgColor: '#F5F5F5',
       borderColor: '#757575',
       animation: 'none'
     },
     reflection: {
-      emoji: '🤔',
+      emoji: sentimentEmoji,
       color: '#795548',
       bgColor: '#EFEBE9',
       borderColor: '#795548',
@@ -57,7 +134,7 @@ export default function LottieAvatar({ mood = 'neutral' }) {
     }
   };
 
-  const currentMood = moodConfig[mood] || moodConfig.neutral;
+  const currentMood = moodConfig[analyzedMood] || moodConfig.neutral;
 
   if (Platform.OS === 'web') {
     // Enhanced web avatar with better styling and mood-based animations

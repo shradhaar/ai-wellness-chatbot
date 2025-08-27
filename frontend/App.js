@@ -335,6 +335,22 @@ export default function App() {
     }
   };
 
+  // Real-time sentiment analysis for dynamic emoji changes
+  const analyzeConversationSentiment = () => {
+    if (chatHistory.length === 0) return 'neutral';
+    
+    // Import the sentiment analyzer
+    const { analyzeConversationSentiment: analyzeSentiment } = require('./utils/sentimentAnalyzer');
+    
+    try {
+      const sentiment = analyzeSentiment(chatHistory, message);
+      return sentiment.emotion;
+    } catch (error) {
+      console.log('Sentiment analysis error:', error);
+      return 'neutral';
+    }
+  };
+
   const welcomeSteps = [
     {
       title: "Welcome to Luna",
@@ -391,15 +407,19 @@ export default function App() {
       <SafeAreaView style={styles.container}>
         <View style={styles.welcomeContainer}>
           <View style={styles.welcomeAvatarWrapper}>
-            <LottieAvatar mood={
-              welcomeStep === 0 ? "happy" : 
-              welcomeStep === 1 ? "reflection" : 
-              welcomeStep === 2 ? "neutral" :
-              welcomeStep === 3 ? "reflection" :
-              welcomeStep === 4 ? "neutral" :
-              welcomeStep === 5 ? "excited" :
-              welcomeStep === 6 ? "excited" : "happy"
-            } />
+            <LottieAvatar 
+              mood={
+                welcomeStep === 0 ? "happy" : 
+                welcomeStep === 1 ? "reflection" : 
+                welcomeStep === 2 ? "neutral" :
+                welcomeStep === 3 ? "reflection" :
+                welcomeStep === 4 ? "neutral" :
+                welcomeStep === 5 ? "excited" :
+                welcomeStep === 6 ? "excited" : "happy"
+              }
+              conversationHistory={[]}
+              currentMessage=""
+            />
           </View>
           
           {/* Progress indicator */}
@@ -524,7 +544,11 @@ export default function App() {
             )}
           </View>
           <View style={styles.avatarWrapper}>
-            <LottieAvatar mood={currentMood} />
+            <LottieAvatar 
+              mood={currentMood} 
+              conversationHistory={chatHistory}
+              currentMessage={message}
+            />
           </View>
         </View>
 
