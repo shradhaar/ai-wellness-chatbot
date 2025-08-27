@@ -23,46 +23,75 @@
 class ReflectionPromptManager {
   constructor() {
     this.prompts = [
-      // General mood check-ins
-      "How are you feeling right now? Choose what resonates most with you:",
-      "Let's check in on your emotional state. What's your current mood?",
-      "I'd love to know how you're doing. How are you feeling today?",
-      "Time for a mood check-in! What's your emotional state right now?",
-      "How's your heart feeling at this moment? Choose what fits best:",
-      "Let's pause and reflect on your feelings. What's your current state?",
-      "I'm curious about your emotional well-being. How are you doing?",
-      "Time for a gentle check-in. What's your mood like right now?",
-      "Let's take a moment to assess your feelings. How are you?",
-      "I want to understand how you're doing. What's your emotional state?",
+      // Wellness Check-ins
+      "What's your energy level like today? Are you feeling energized, balanced, or drained?",
+      "How's your mind-body connection feeling right now? Are they in sync or disconnected?",
+      "What's your stress level on a scale of 1-10? And what's contributing to that?",
+      "How's your sleep quality been lately? Are you feeling rested or exhausted?",
+      "What's your appetite for life today? Are you feeling motivated or needing a break?",
       
-      // More engaging variations
-      "Take a deep breath and check in with yourself. How are you feeling?",
-      "Let's tune into your emotions. What's your current state of mind?",
-      "I'm here to listen. How would you describe your mood right now?",
-      "Let's pause for a moment of self-reflection. How are you doing?",
-      "Your feelings matter. What's your emotional landscape like today?",
-      "Let's connect with your inner state. How are you feeling?",
-      "I'd love to understand your current emotional experience. How are you?",
-      "Let's take stock of your feelings. What's your mood like?",
-      "Your emotional well-being is important. How are you doing?",
-      "Let's check in on your heart and mind. How are you feeling?",
+      // Emotional Weather & Metaphors
+      "If your emotions were weather, what's your forecast today?",
+      "What color would you paint your current mood? And why that shade?",
+      "If your feelings were music, what genre would they be right now?",
+      "What animal energy are you embodying today? Calm like a cat or restless like a bird?",
+      "What season does your heart feel like it's in right now?",
       
-      // Additional diverse prompts for more variety
-      "What's your emotional weather like today? Sunny, cloudy, or stormy?",
-      "Let's take a moment to tune into your inner voice. How are you?",
-      "Your emotional journey matters. What's your current chapter like?",
-      "Let's pause and honor your feelings. How are you doing?",
-      "I'm here to witness your emotional experience. How are you?",
-      "Let's create space for your feelings. What's present for you?",
-      "Your emotional landscape is unique. How does it look today?",
-      "Let's gently explore your current state. How are you feeling?",
-      "I want to understand your emotional world. How are you?",
-      "Let's take a mindful moment together. How are you doing?",
-      "Your feelings deserve attention. What's your current experience?",
-      "Let's connect with your emotional truth. How are you?",
-      "I'm curious about your inner world. How are you feeling?",
-      "Let's honor your emotional reality. How are you doing?",
-      "Your emotional well-being is precious. How are you today?"
+      // Body Awareness
+      "How's your body feeling today? Any areas of tension or ease?",
+      "What's your breathing like right now? Shallow, deep, or somewhere in between?",
+      "How's your posture feeling? Are you carrying any physical stress?",
+      "What's your energy flow like? Are you feeling stuck or flowing freely?",
+      "How's your connection to your physical self today?",
+      
+      // Mind & Thoughts
+      "What's the quality of your thoughts today? Clear, foggy, or racing?",
+      "How's your mental bandwidth? Are you feeling focused or scattered?",
+      "What's your inner dialogue like right now? Supportive or critical?",
+      "How's your concentration today? Are you present or distracted?",
+      "What's your mental energy like? Sharp, dull, or somewhere in between?",
+      
+      // Social & Connection
+      "How's your social battery today? Are you craving connection or needing solitude?",
+      "What's your relationship with yourself like right now?",
+      "How connected do you feel to others today? Close or distant?",
+      "What's your need for space vs. connection today?",
+      "How's your sense of belonging feeling right now?",
+      
+      // Growth & Movement
+      "What's your growth mindset like today? Are you feeling stuck or expanding?",
+      "How's your motivation for self-care today? High, low, or moderate?",
+      "What's your capacity for change feeling like right now?",
+      "How's your resilience today? Are you feeling strong or needing support?",
+      "What's your openness to new experiences feeling like?",
+      
+      // Gratitude & Perspective
+      "What's one thing you're grateful for about yourself today?",
+      "What's your perspective on life feeling like right now? Hopeful, realistic, or challenging?",
+      "How's your sense of purpose today? Clear, uncertain, or evolving?",
+      "What's your relationship with time like today? Rushed, peaceful, or balanced?",
+      "How's your appreciation for the present moment today?",
+      
+      // Creative & Expressive
+      "If you could express your current state through art, what would you create?",
+      "What's your creative energy like today? Flowing, blocked, or dormant?",
+      "How's your imagination feeling? Active, quiet, or somewhere in between?",
+      "What's your need for self-expression today?",
+      "How's your inner artist feeling right now?",
+      
+      // Balance & Harmony
+      "How balanced do you feel between giving and receiving today?",
+      "What's your work-life harmony like today? In sync or out of balance?",
+      "How's your energy distribution feeling? Are you overextended or well-paced?",
+      "What's your need for structure vs. flexibility today?",
+      "How's your sense of equilibrium today?",
+      
+      // Future & Possibility
+      "What's your relationship with the future today? Excited, anxious, or neutral?",
+      "How's your sense of possibility feeling? Open, limited, or expanding?",
+      "What's your capacity for dreaming today?",
+      "How's your relationship with uncertainty today?",
+      "What's your vision for yourself feeling like right now?"
     ];
     
     this.usedPrompts = [];
@@ -234,16 +263,21 @@ export function getEmotionalReflectionPrompt(recentMood) {
 // Teen-specific reflection prompts
 function getTeenReflectionPrompt() {
   const teenPrompts = [
-    "Hey! Let's check in on how you're feeling right now. What's your current mood?",
-    "What's up with your emotions today? How are you doing?",
-    "Let's take a quick moment to see how you're feeling. What's your vibe?",
-    "Hey there! How's your emotional state right now?",
-    "What's your mood like at this moment? Let's check in!",
-    "How are you feeling right now? Take a sec to reflect!",
-    "What's your emotional weather like today? Sunny, cloudy, or stormy?",
-    "Let's pause and see what's going on with your feelings. How are you?",
-    "Hey! How would you describe your current emotional state?",
-    "What's your heart telling you right now? How are you feeling?"
+    "Hey! What's your vibe today? Are you feeling pumped, chill, or something else?",
+    "What's your social energy like right now? Ready to hang out or needing some me-time?",
+    "How's your school/work stress level? Are you feeling on top of things or overwhelmed?",
+    "What's your creative spark like today? Are you feeling inspired or stuck?",
+    "How's your body feeling? Any areas that feel tense or relaxed?",
+    "What's your mental space like? Clear and focused or all over the place?",
+    "How's your confidence today? Are you feeling strong or needing a boost?",
+    "What's your relationship with social media like today? Connected or needing a break?",
+    "How's your sleep been? Are you feeling rested or running on empty?",
+    "What's your appetite for adventure today? Ready to try new things or wanting to stay comfortable?",
+    "How's your relationship with your family/friends feeling today?",
+    "What's your need for independence vs. support today?",
+    "How's your relationship with technology today? Helpful or distracting?",
+    "What's your creative energy like? Are you feeling artistic or practical?",
+    "How's your sense of identity today? Clear, confused, or evolving?"
   ];
   
   // Use the same rotation logic for teen prompts
@@ -253,16 +287,21 @@ function getTeenReflectionPrompt() {
 // Senior-specific reflection prompts
 function getSeniorReflectionPrompt() {
   const seniorPrompts = [
-    "Let's take a moment to reflect on your current emotional state. How are you feeling?",
-    "How is your emotional well-being today? Let's check in together.",
-    "Let's pause and honor your feelings. How are you doing?",
-    "Your emotional journey matters. What's your current chapter like?",
-    "Let's take stock of your feelings. How are you today?",
-    "I'm here to witness your emotional experience. How are you?",
-    "Let's create space for your feelings. What's present for you?",
-    "Your emotional landscape is unique. How does it look today?",
-    "Let's gently explore your current state. How are you feeling?",
-    "Your emotional well-being is precious. How are you today?"
+    "How's your wisdom and life experience serving you today? Are you feeling grounded or uncertain?",
+    "What's your relationship with change feeling like today? Embracing it or needing stability?",
+    "How's your connection to your legacy and life story today?",
+    "What's your relationship with time feeling like? Rushed, peaceful, or reflective?",
+    "How's your sense of purpose and meaning today? Clear, evolving, or needing rediscovery?",
+    "What's your relationship with your body and health today? Strong, adapting, or needing care?",
+    "How's your connection to community and relationships today? Supported or isolated?",
+    "What's your creative and intellectual energy like today? Active, quiet, or flowing?",
+    "How's your relationship with technology and modern life today? Connected or overwhelmed?",
+    "What's your sense of gratitude and appreciation today? Abundant, quiet, or growing?",
+    "How's your relationship with your past, present, and future today?",
+    "What's your need for independence vs. support today?",
+    "How's your relationship with nature and the world around you today?",
+    "What's your spiritual or philosophical perspective feeling like today?",
+    "How's your relationship with learning and growth today? Curious, satisfied, or seeking?"
   ];
   
   // Use the same rotation logic for senior prompts
