@@ -5,7 +5,7 @@ require('dotenv').config();
 
 // Set Gemini API key if not in environment
 if (!process.env.GEMINI_API_KEY) {
-  process.env.GEMINI_API_KEY = 'AIzaSyBkrkMCwneeuXymryoHMilvN2ErWaHP428';
+  process.env.GEMINI_API_KEY = 'AIzaSyBZqTDT8X6naJGyYT-7YftCoyjP4VX6rT0';
 }
 
 const app = express();
