@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieAvatar from './components/LottieAvatar';
 import { saveMood, getMoodHistory } from './storage/moodStorage';
-import { getContextualReflectionPrompt, resetReflectionPrompts, getReflectionStatus, getRotationVisual, getEmotionalReflectionPrompt } from './utils/reflectionPrompts';
+import { getContextualReflectionPrompt, resetReflectionPrompts, getReflectionStatus, getRotationVisual, getEmotionalReflectionPrompt, forceRefreshPrompts } from './utils/reflectionPrompts';
 import { generateUserPersonality, getConversationStarters } from './utils/personalityAdapter';
 
 export default function App() {
@@ -253,17 +253,26 @@ export default function App() {
     
     setShowMoodSelection(true);
     
-    // Get age-appropriate reflection prompt
+    // Force refresh prompts to ensure variety
+    forceRefreshPrompts();
+    
+    // Get a fresh reflection prompt from the rotation system
     let reflectionText = getEmotionalReflectionPrompt(currentMood);
     
-    // Adapt the prompt based on user's personality if available
+    // Adapt the prompt based on user's personality if available, but still use rotation
     if (userPersonality) {
       if (userPersonality.ageGroup === 'teen') {
-        reflectionText = "Hey! Let's check in on how you're feeling right now. What's your current mood?";
+        // Get a teen-appropriate prompt from the rotation system
+        reflectionText = getEmotionalReflectionPrompt('teen');
       } else if (userPersonality.ageGroup === 'senior') {
-        reflectionText = "Let's take a moment to reflect on your current emotional state. How are you feeling?";
+        // Get a senior-appropriate prompt from the rotation system
+        reflectionText = getEmotionalReflectionPrompt('senior');
       }
     }
+    
+    // Add some debugging to see what prompt we're getting
+    console.log('Reflection prompt generated:', reflectionText);
+    console.log('User personality:', userPersonality?.ageGroup);
     
     const reflectionMessage = {
       text: reflectionText,

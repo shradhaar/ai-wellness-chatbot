@@ -221,7 +221,67 @@ export function getContextualReflectionPrompt(conversationLength) {
 }
 
 export function getEmotionalReflectionPrompt(recentMood) {
+  // Handle age-specific prompts
+  if (recentMood === 'teen') {
+    return getTeenReflectionPrompt();
+  } else if (recentMood === 'senior') {
+    return getSeniorReflectionPrompt();
+  }
+  
   return promptManager.getEmotionalPrompt(recentMood);
+}
+
+// Teen-specific reflection prompts
+function getTeenReflectionPrompt() {
+  const teenPrompts = [
+    "Hey! Let's check in on how you're feeling right now. What's your current mood?",
+    "What's up with your emotions today? How are you doing?",
+    "Let's take a quick moment to see how you're feeling. What's your vibe?",
+    "Hey there! How's your emotional state right now?",
+    "What's your mood like at this moment? Let's check in!",
+    "How are you feeling right now? Take a sec to reflect!",
+    "What's your emotional weather like today? Sunny, cloudy, or stormy?",
+    "Let's pause and see what's going on with your feelings. How are you?",
+    "Hey! How would you describe your current emotional state?",
+    "What's your heart telling you right now? How are you feeling?"
+  ];
+  
+  // Use the same rotation logic for teen prompts
+  return getRotatedPrompt(teenPrompts);
+}
+
+// Senior-specific reflection prompts
+function getSeniorReflectionPrompt() {
+  const seniorPrompts = [
+    "Let's take a moment to reflect on your current emotional state. How are you feeling?",
+    "How is your emotional well-being today? Let's check in together.",
+    "Let's pause and honor your feelings. How are you doing?",
+    "Your emotional journey matters. What's your current chapter like?",
+    "Let's take stock of your feelings. How are you today?",
+    "I'm here to witness your emotional experience. How are you?",
+    "Let's create space for your feelings. What's present for you?",
+    "Your emotional landscape is unique. How does it look today?",
+    "Let's gently explore your current state. How are you feeling?",
+    "Your emotional well-being is precious. How are you today?"
+  ];
+  
+  // Use the same rotation logic for senior prompts
+  return getRotatedPrompt(seniorPrompts);
+}
+
+// Helper function to rotate through prompts with better randomization
+function getRotatedPrompt(prompts) {
+  // Add some randomness to prevent the same prompt from appearing too frequently
+  const randomIndex = Math.floor(Math.random() * prompts.length);
+  const selectedPrompt = prompts[randomIndex];
+  
+  // Add a small chance to get a completely random prompt (bypassing any potential patterns)
+  if (Math.random() < 0.3) {
+    const alternativeIndex = (randomIndex + Math.floor(Math.random() * prompts.length)) % prompts.length;
+    return prompts[alternativeIndex];
+  }
+  
+  return selectedPrompt;
 }
 
 // Export additional utility functions
@@ -235,6 +295,20 @@ export function getReflectionStatus() {
 
 export function getRotationVisual() {
   return promptManager.getRotationVisual();
+}
+
+// Force refresh prompts to get new variety
+export function forceRefreshPrompts() {
+  // Reset the main prompt manager
+  promptManager.reset();
+  
+  // Add some additional randomization
+  const randomDelay = Math.random() * 100;
+  setTimeout(() => {
+    // This ensures we get fresh prompts on next call
+  }, randomDelay);
+  
+  return "Prompts refreshed! ✨";
 }
 
 // Legacy function for backward compatibility
