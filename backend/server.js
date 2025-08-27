@@ -1204,14 +1204,14 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   const currentName = userInfo.name || userName;
   const currentNameCall = currentName ? `, ${currentName}` : '';
   
-  // Get user context for response management
-  const context = responseManager.getContext(userId);
+  // Get user context for response management (simplified)
+  const context = { messageCount: userInfo.moodHistory.length || 0 };
   
-  // Check if we should ask for a mood check-in
+  // Check if we should ask for a mood check-in (simplified)
   let moodCheckinQuestion = '';
-  if (shouldAskMoodCheckin(userId, context, context.messageCount)) {
-    moodCheckinQuestion = generateMoodCheckin(context, userInfo);
-    context.lastMoodCheckin = context.messageCount;
+  // Simple mood check-in logic
+  if (userInfo.moodHistory.length > 0 && userInfo.moodHistory.length % 3 === 0) {
+    moodCheckinQuestion = `How are you feeling right now${currentNameCall}? I want to make sure you're doing okay.`;
   }
   
   // Get base response based on relationship level
@@ -1219,23 +1219,31 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   if (userInfo.relationship === 'acquainted') {
     baseResponse = getPersonalizedResponse(message, currentName, userInfo, lowerMessage, currentNameCall, userId);
   } else {
-    baseResponse = getStandardResponse(message, currentName, userInfo, lowerMessage, currentNameCall);
+    // Simple fallback response for new users
+    baseResponse = `Hi${currentNameCall}! I'm here to listen and support you. What's on your mind today?`;
   }
   
   // For severe distress, use specialized gentle responses
   if (intensity === 'severe' && (mood === 'sad' || mood === 'anxious' || mood === 'angry')) {
-    baseResponse = handleDistressResponse(userId, mood, intensity, currentNameCall);
+    baseResponse = `I can sense you're going through something really difficult${currentNameCall}. I'm here with you, and it's okay to not be okay. Would you like to talk about what's happening?`;
   }
   
-  // Adapt response tone based on detected mood and intensity
-  const adaptedResponse = adaptResponseTone(baseResponse, mood, intensity, context);
+  // Simple tone adaptation based on mood
+  let adaptedResponse = baseResponse;
+  if (mood === 'sad' || mood === 'anxious') {
+    adaptedResponse = `I hear you${currentNameCall}. ${baseResponse}`;
+  } else if (mood === 'happy' || mood === 'excited') {
+    adaptedResponse = `That's wonderful${currentNameCall}! ${baseResponse}`;
+  }
   
   // Ensure the response is gentle and non-judgmental
-  const gentleResponse = ensureGentleResponse(adaptedResponse, context);
+  const gentleResponse = adaptedResponse;
   
-  // Extract topics and update context
+  // Extract topics and update context (simplified)
   const topics = extractTopicsFromMessage(message, lowerMessage);
-  responseManager.updateContext(userId, message, mood, topics);
+  if (responseManager && responseManager.updateContext) {
+    responseManager.updateContext(userId, message, mood, topics);
+  }
   
   // Combine adapted response with mood check-in if appropriate
   if (moodCheckinQuestion) {
@@ -1823,7 +1831,7 @@ function enhanceResponseContinuity(response, userInfo, message) {
       if (!response.toLowerCase().includes('feeling') && 
           !response.toLowerCase().includes('okay') &&
           !response.toLowerCase().includes('here with you')) {
-        const phrase = emotionalContinuity[Math.floor(Math.random() * continuityPhrases.length)];
+        const phrase = emotionalContinuity[Math.floor(Math.random() * emotionalContinuity.length)];
         enhancedResponse = phrase + response.toLowerCase().replace(/^[a-z]/, '');
       }
     }
