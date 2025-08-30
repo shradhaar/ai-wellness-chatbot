@@ -1365,6 +1365,10 @@ app.post('/chat', async (req, res) => {
           preferredTone: 'warm',
           traumaAwareness: false,
           culturalBackground: userLocation || ''
+        },
+        locationPhrases: {
+          used: [],
+          lastUsed: null
         }
       };
       userData.set(userKey, userInfo);
@@ -1631,6 +1635,13 @@ Your conversation style should be:
 - Be direct and to the point while maintaining warmth
 - No long explanations or multiple paragraphs
 
+IMPORTANT LOCATION REFERENCE RULES:
+- If referencing ${userLocation}, use VARIED phrases - never repeat the same expression
+- For California: mix up "Golden State", "Cali", "West Coast", "Pacific Coast", "SoCal/NorCal", "California sunshine", "West Coast vibes"
+- For other locations: use diverse cultural references, local landmarks, or regional expressions
+- Avoid repetitive phrases like "under the stars" or "thinking of you in [location]"
+- Make location references feel natural and varied, not formulaic
+
 Current conversation context:
 - User: ${name}
 - Total messages exchanged: ${userInfo.conversationCount}
@@ -1669,7 +1680,11 @@ Please respond as Luna would:
 - Be supportive without being overly clinical or therapeutic
 - Remember their age, gender, and cultural background in your response
 
-Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${name}'s experience.`;
+Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${name}'s experience.
+
+LOCATION VARIETY CHECK: If you mention ${userLocation}, ensure you're using a different phrase than you've used before. Mix up your cultural references and avoid repetitive expressions.
+
+LOCATION PHRASE HISTORY: Previously used phrases for ${userLocation}: ${userInfo.locationPhrases?.used?.join(', ') || 'none'}. Use a completely different expression this time.`;
   
   return context;
 }
@@ -1774,6 +1789,95 @@ function getCulturalStyle(location) {
   if (locationLower.includes('japan')) return 'Use respectful and formal expressions';
   if (locationLower.includes('china')) return 'Use respectful expressions with cultural awareness';
   return 'Use universal expressions with cultural sensitivity';
+}
+
+// Function to generate varied location-based phrases to prevent repetition
+function getVariedLocationPhrase(location, type = 'supportive') {
+  if (!location) return '';
+  
+  const locationLower = location.toLowerCase();
+  
+  if (locationLower.includes('california') || locationLower.includes('cali')) {
+    const californiaPhrases = {
+      supportive: [
+        'Sending you West Coast vibes',
+        'From the Golden State with care',
+        'California sunshine thoughts',
+        'Pacific Coast support coming your way',
+        'SoCal/NorCal love',
+        'Golden State strength',
+        'West Coast warmth',
+        'California dreaming of better days'
+      ],
+      general: [
+        'Golden State',
+        'Cali',
+        'West Coast',
+        'Pacific Coast',
+        'SoCal',
+        'NorCal'
+      ]
+    };
+    return californiaPhrases[type][Math.floor(Math.random() * californiaPhrases[type].length)];
+  }
+  
+  if (locationLower.includes('new york') || locationLower.includes('nyc')) {
+    const nycPhrases = {
+      supportive: [
+        'Big Apple energy',
+        'NYC strength',
+        'City that never sleeps support',
+        'Empire State of mind',
+        'Manhattan vibes',
+        'Brooklyn love'
+      ],
+      general: [
+        'Big Apple',
+        'NYC',
+        'Empire State',
+        'Manhattan',
+        'Brooklyn'
+      ]
+    };
+    return nycPhrases[type][Math.floor(Math.random() * nycPhrases[type].length)];
+  }
+  
+  if (locationLower.includes('london')) {
+    const londonPhrases = {
+      supportive: [
+        'London calling with support',
+        'Big Smoke love',
+        'Thames-side thoughts',
+        'British warmth',
+        'London Bridge strength'
+      ],
+      general: [
+        'Big Smoke',
+        'Thames-side',
+        'British',
+        'London Bridge'
+      ]
+    };
+    return londonPhrases[type][Math.floor(Math.random() * londonPhrases[type].length)];
+  }
+  
+  // Generic location phrases
+  const genericPhrases = {
+    supportive: [
+      'Sending you strength from afar',
+      'Thinking of you',
+      'Sending positive vibes',
+      'You\'ve got this',
+      'I believe in you'
+    ],
+    general: [
+      'your area',
+      'your corner of the world',
+      'where you are'
+    ]
+  };
+  
+  return genericPhrases[type][Math.floor(Math.random() * genericPhrases[type].length)];
 }
 
 // Function to validate Gemini responses
