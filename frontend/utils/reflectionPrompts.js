@@ -261,7 +261,7 @@ class ReflectionPromptManager {
     const lowerQuestion = question.toLowerCase();
     
     // Mental bandwidth / focus questions
-    if (lowerQuestion.includes('mental bandwidth') || lowerQuestion.includes('focused') || lowerQuestion.includes('scattered') || lowerQuestion.includes('concentration') || lowerQuestion.includes('thoughts')) {
+    if (lowerQuestion.includes('mental bandwidth') || lowerQuestion.includes('focused') || lowerQuestion.includes('scattered') || lowerQuestion.includes('concentration') || lowerQuestion.includes('thoughts') || lowerQuestion.includes('mind')) {
       return [
         { text: 'Focused & Clear', value: 'focused', mood: 'positive', emoji: '🎯' },
         { text: 'Scattered & Overwhelmed', value: 'scattered', mood: 'negative', emoji: '😵‍💫' },
@@ -271,7 +271,7 @@ class ReflectionPromptManager {
     }
     
     // Energy level questions
-    if (lowerQuestion.includes('energy') || lowerQuestion.includes('tired') || lowerQuestion.includes('vitality') || lowerQuestion.includes('exhausted') || lowerQuestion.includes('drained')) {
+    if (lowerQuestion.includes('energy') || lowerQuestion.includes('tired') || lowerQuestion.includes('vitality') || lowerQuestion.includes('exhausted') || lowerQuestion.includes('drained') || lowerQuestion.includes('energized')) {
       return [
         { text: 'Energized & Ready', value: 'energized', mood: 'positive', emoji: '⚡' },
         { text: 'Tired & Drained', value: 'tired', mood: 'negative', emoji: '😴' },
@@ -281,7 +281,7 @@ class ReflectionPromptManager {
     }
     
     // Stress/anxiety questions
-    if (lowerQuestion.includes('stress') || lowerQuestion.includes('anxiety') || lowerQuestion.includes('worried') || lowerQuestion.includes('tense') || lowerQuestion.includes('overwhelmed')) {
+    if (lowerQuestion.includes('stress') || lowerQuestion.includes('anxiety') || lowerQuestion.includes('worried') || lowerQuestion.includes('tense') || lowerQuestion.includes('overwhelmed') || lowerQuestion.includes('pressure')) {
       return [
         { text: 'Calm & Relaxed', value: 'calm', mood: 'positive', emoji: '😌' },
         { text: 'Stressed & Anxious', value: 'stressed', mood: 'negative', emoji: '😰' },
@@ -291,7 +291,7 @@ class ReflectionPromptManager {
     }
     
     // Gratitude questions
-    if (lowerQuestion.includes('grateful') || lowerQuestion.includes('appreciate') || lowerQuestion.includes('thankful') || lowerQuestion.includes('blessed')) {
+    if (lowerQuestion.includes('grateful') || lowerQuestion.includes('appreciate') || lowerQuestion.includes('thankful') || lowerQuestion.includes('blessed') || lowerQuestion.includes('positive')) {
       return [
         { text: 'Very Grateful', value: 'grateful', mood: 'positive', emoji: '🙏' },
         { text: 'Somewhat Thankful', value: 'somewhat', mood: 'neutral', emoji: '😊' },
@@ -301,7 +301,7 @@ class ReflectionPromptManager {
     }
     
     // Connection questions
-    if (lowerQuestion.includes('connection') || lowerQuestion.includes('relationship') || lowerQuestion.includes('lonely') || lowerQuestion.includes('social') || lowerQuestion.includes('belonging')) {
+    if (lowerQuestion.includes('connection') || lowerQuestion.includes('relationship') || lowerQuestion.includes('lonely') || lowerQuestion.includes('social') || lowerQuestion.includes('belonging') || lowerQuestion.includes('people')) {
       return [
         { text: 'Well Connected', value: 'connected', mood: 'positive', emoji: '💫' },
         { text: 'Feeling Lonely', value: 'lonely', mood: 'negative', emoji: '😔' },
@@ -311,7 +311,7 @@ class ReflectionPromptManager {
     }
     
     // Sleep questions
-    if (lowerQuestion.includes('sleep') || lowerQuestion.includes('rested') || lowerQuestion.includes('exhausted') || lowerQuestion.includes('tired')) {
+    if (lowerQuestion.includes('sleep') || lowerQuestion.includes('rested') || lowerQuestion.includes('exhausted') || lowerQuestion.includes('tired') || lowerQuestion.includes('rest')) {
       return [
         { text: 'Well Rested', value: 'rested', mood: 'positive', emoji: '😴' },
         { text: 'Tired & Exhausted', value: 'exhausted', mood: 'negative', emoji: '😫' },
@@ -321,7 +321,7 @@ class ReflectionPromptManager {
     }
     
     // Creative questions
-    if (lowerQuestion.includes('creative') || lowerQuestion.includes('artistic') || lowerQuestion.includes('inspired') || lowerQuestion.includes('imagination')) {
+    if (lowerQuestion.includes('creative') || lowerQuestion.includes('artistic') || lowerQuestion.includes('inspired') || lowerQuestion.includes('imagination') || lowerQuestion.includes('ideas')) {
       return [
         { text: 'Feeling Inspired', value: 'inspired', mood: 'positive', emoji: '🎨' },
         { text: 'Creative Block', value: 'blocked', mood: 'negative', emoji: '🚫' },
@@ -331,7 +331,7 @@ class ReflectionPromptManager {
     }
     
     // Body awareness questions
-    if (lowerQuestion.includes('body') || lowerQuestion.includes('breathing') || lowerQuestion.includes('posture') || lowerQuestion.includes('tension')) {
+    if (lowerQuestion.includes('body') || lowerQuestion.includes('breathing') || lowerQuestion.includes('posture') || lowerQuestion.includes('tension') || lowerQuestion.includes('physical')) {
       return [
         { text: 'Feeling Great', value: 'great', mood: 'positive', emoji: '💪' },
         { text: 'Some Tension', value: 'tension', mood: 'neutral', emoji: '😐' },
@@ -341,7 +341,7 @@ class ReflectionPromptManager {
     }
     
     // Growth/motivation questions
-    if (lowerQuestion.includes('growth') || lowerQuestion.includes('motivation') || lowerQuestion.includes('stuck') || lowerQuestion.includes('change')) {
+    if (lowerQuestion.includes('growth') || lowerQuestion.includes('motivation') || lowerQuestion.includes('stuck') || lowerQuestion.includes('change') || lowerQuestion.includes('progress')) {
       return [
         { text: 'Growing & Learning', value: 'growing', mood: 'positive', emoji: '🌱' },
         { text: 'Feeling Stuck', value: 'stuck', mood: 'negative', emoji: '🔄' },
@@ -357,6 +357,40 @@ class ReflectionPromptManager {
         { text: 'Cloudy & Gray', value: 'cloudy', mood: 'negative', emoji: '☁️' },
         { text: 'Mixed Conditions', value: 'mixed', mood: 'neutral', emoji: '🌤️' },
         { text: 'Stormy & Rough', value: 'stormy', mood: 'negative', emoji: '⛈️' }
+      ];
+    }
+    
+    // General mood check-in questions (like "How are you feeling?")
+    if (lowerQuestion.includes('feeling') || lowerQuestion.includes('mood') || lowerQuestion.includes('how are you') || lowerQuestion.includes('check in')) {
+      // Generate varied options based on the prompt content
+      const promptWords = question.toLowerCase().split(' ');
+      
+      // Check if the prompt mentions positive energy, good place, etc.
+      if (promptWords.some(word => ['positive', 'energy', 'wonderful', 'good', 'place', 'great'].includes(word))) {
+        return [
+          { text: 'Feeling Amazing!', value: 'amazing', mood: 'positive', emoji: '🌟' },
+          { text: 'Pretty Good', value: 'prettyGood', mood: 'positive', emoji: '😊' },
+          { text: 'Could Be Better', value: 'couldBeBetter', mood: 'neutral', emoji: '🤔' },
+          { text: 'Actually Struggling', value: 'struggling', mood: 'negative', emoji: '😔' }
+        ];
+      }
+      
+      // Check if it's a general mood question
+      if (promptWords.some(word => ['feeling', 'mood', 'right now', 'currently'].includes(word))) {
+        return [
+          { text: 'Feeling Great!', value: 'great', mood: 'positive', emoji: '😊' },
+          { text: 'Pretty Good', value: 'prettyGood', mood: 'positive', emoji: '😌' },
+          { text: 'Okay-ish', value: 'okayish', mood: 'neutral', emoji: '😐' },
+          { text: 'Not Great', value: 'notGreat', mood: 'negative', emoji: '😕' }
+        ];
+      }
+      
+      // Default mood options
+      return [
+        { text: 'Feeling Wonderful', value: 'wonderful', mood: 'positive', emoji: '✨' },
+        { text: 'Pretty Good', value: 'prettyGood', mood: 'positive', emoji: '😊' },
+        { text: 'So-So', value: 'soso', mood: 'neutral', emoji: '😐' },
+        { text: 'Need Support', value: 'needSupport', mood: 'negative', emoji: '🤗' }
       ];
     }
     

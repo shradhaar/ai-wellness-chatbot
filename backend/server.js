@@ -1427,6 +1427,9 @@ app.post('/chat', async (req, res) => {
         'growing': 'excited',
         'sunny': 'happy',
         'good': 'happy',
+        'amazing': 'excited',
+        'prettyGood': 'happy',
+        'wonderful': 'excited',
         
         // Neutral moods
         'mixed': 'neutral',
@@ -1436,7 +1439,9 @@ app.post('/chat', async (req, res) => {
         'okay': 'neutral',
         'tension': 'neutral',
         'progress': 'neutral',
-        'mixed': 'neutral',
+        'couldBeBetter': 'neutral',
+        'okayish': 'neutral',
+        'soso': 'neutral',
         
         // Negative moods
         'scattered': 'overwhelmed',
