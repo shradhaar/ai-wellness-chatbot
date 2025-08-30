@@ -345,7 +345,7 @@ export default function App() {
     }
   };
 
-  // Real-time sentiment analysis for dynamic emoji changes
+  // Real-time sentiment analysis for dynamic emoji changes (INTERNAL ONLY - doesn't affect conversation flow)
   const [conversationSentiment, setConversationSentiment] = useState({ emotion: 'neutral', emoji: '😐', confidence: 0.5 });
   
   // Actively analyze conversation sentiment whenever chat history or message changes
@@ -356,8 +356,8 @@ export default function App() {
         const sentiment = analyzeSentiment(chatHistory, message);
         setConversationSentiment(sentiment);
         
-        // Log sentiment analysis for debugging
-        console.log('🎭 Active Sentiment Analysis:', {
+        // Log sentiment analysis for debugging (internal only)
+        console.log('🎭 Internal Sentiment Analysis:', {
           emotion: sentiment.emotion,
           emoji: sentiment.emoji,
           confidence: sentiment.confidence,
@@ -371,9 +371,9 @@ export default function App() {
     }
   }, [chatHistory, message]);
   
-  // Get the most appropriate emoji based on conversation sentiment
+  // Get the most appropriate emoji based on conversation sentiment (INTERNAL ONLY)
   const getActiveEmoji = () => {
-    // If we have a strong sentiment signal, use it
+    // If we have a strong sentiment signal, use it for emoji only
     if (conversationSentiment.confidence > 0.3) {
       return conversationSentiment.emoji;
     }
@@ -597,7 +597,7 @@ export default function App() {
           </View>
           <View style={styles.avatarWrapper}>
             <LottieAvatar 
-              mood={conversationSentiment.emotion} 
+              mood={currentMood} 
               conversationHistory={chatHistory}
               currentMessage={message}
               activeEmoji={getActiveEmoji()}

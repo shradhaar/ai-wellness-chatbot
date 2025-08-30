@@ -32,12 +32,12 @@ export default function LottieAvatar({
     }
   }, [conversationHistory, currentMessage, mood]);
   
-  // Use active emoji from parent if provided and sentiment is strong
+  // Use active emoji from parent if provided and sentiment is strong, but prioritize explicit mood
   useEffect(() => {
-    if (activeEmoji && sentimentConfidence > 0.3) {
+    if (activeEmoji && sentimentConfidence > 0.3 && !mood) {
       setSentimentEmoji(activeEmoji);
     }
-  }, [activeEmoji, sentimentConfidence]);
+  }, [activeEmoji, sentimentConfidence, mood]);
   
   // Use analyzed mood for configuration
   const moodConfig = {
@@ -176,8 +176,8 @@ export default function LottieAvatar({
 
   const currentMood = moodConfig[analyzedMood] || moodConfig.neutral;
   
-  // Use the moodConfig emoji if available, otherwise fall back to sentimentEmoji
-  const displayEmoji = currentMood.emoji || sentimentEmoji;
+  // Prioritize moodConfig emoji, but use sentiment emoji as fallback for more dynamic expression
+  const displayEmoji = currentMood.emoji || (sentimentEmoji && sentimentEmoji !== '😐' ? sentimentEmoji : currentMood.emoji);
 
   if (Platform.OS === 'web') {
     // Enhanced web avatar with better styling and mood-based animations
@@ -230,7 +230,7 @@ export default function LottieAvatar({
             color: currentMood.color,
             textTransform: 'capitalize',
           }}>
-            {analyzedMood.charAt(0).toUpperCase() + analyzedMood.slice(1)}
+            {mood.charAt(0).toUpperCase() + mood.slice(1)}
           </span>
         </div>
       </div>
@@ -302,7 +302,7 @@ export default function LottieAvatar({
             styles.moodText,
             { color: currentMood.color }
           ]}>
-            {analyzedMood.charAt(0).toUpperCase() + analyzedMood.slice(1)}
+            {mood.charAt(0).toUpperCase() + mood.slice(1)}
           </Text>
         </View>
       </View>
