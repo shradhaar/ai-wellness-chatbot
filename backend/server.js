@@ -1403,9 +1403,49 @@ app.post('/chat', async (req, res) => {
       conversationCount: userInfo.conversationCount
     });
     
-    // Detect mood from message
-    const moodDetection = detectMoodFromMessage(message, message.toLowerCase());
-    const { mood, intensity, emotionalKeywords } = moodDetection;
+    // Detect mood from message (handle both old format and new dynamic format)
+    let moodDetection;
+    let mood, intensity, emotionalKeywords;
+    
+    // Check if this is a dynamic mood selection (e.g., "Focused & Clear (focused)")
+    const dynamicMoodMatch = message.match(/^(.+?)\s*\(([^)]+)\)$/);
+    if (dynamicMoodMatch) {
+      const moodText = dynamicMoodMatch[1].trim();
+      const moodValue = dynamicMoodMatch[2].trim();
+      
+      // Map dynamic mood values to standard moods
+      const moodMapping = {
+        'focused': 'happy',
+        'energized': 'excited',
+        'calm': 'peaceful',
+        'grateful': 'happy',
+        'connected': 'happy',
+        'inspired': 'excited',
+        'rested': 'peaceful',
+        'scattered': 'overwhelmed',
+        'tired': 'tired',
+        'stressed': 'anxious',
+        'lonely': 'sad',
+        'exhausted': 'tired',
+        'blocked': 'frustrated',
+        'struggling': 'sad',
+        'needHelp': 'overwhelmed',
+        'needBoost': 'tired',
+        'needSupport': 'sad',
+        'needSleep': 'tired',
+        'needTalk': 'sad'
+      };
+      
+      mood = moodMapping[moodValue] || 'neutral';
+      intensity = mood === 'neutral' ? 1 : 3;
+      emotionalKeywords = [moodValue, moodText];
+      
+      moodDetection = { mood, intensity, emotionalKeywords };
+    } else {
+      // Use standard mood detection for regular messages
+      moodDetection = detectMoodFromMessage(message, message.toLowerCase());
+      ({ mood, intensity, emotionalKeywords } = moodDetection);
+    }
     
     // Update mood history
     if (mood !== 'neutral') {

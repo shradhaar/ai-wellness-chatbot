@@ -13,7 +13,7 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieAvatar from './components/LottieAvatar';
 import { saveMood, getMoodHistory } from './storage/moodStorage';
-import { getContextualReflectionPrompt, resetReflectionPrompts, getReflectionStatus, getRotationVisual, getEmotionalReflectionPrompt, forceRefreshPrompts } from './utils/reflectionPrompts';
+import { getContextualReflectionPrompt, resetReflectionPrompts, getReflectionStatus, getRotationVisual, getEmotionalReflectionPrompt, forceRefreshPrompts, getDynamicReflectionOptions } from './utils/reflectionPrompts';
 import { generateUserPersonality, getConversationStarters } from './utils/personalityAdapter';
 
 export default function App() {
@@ -270,8 +270,12 @@ export default function App() {
       }
     }
     
+    // Generate dynamic options for this specific prompt
+    const dynamicOptions = getDynamicReflectionOptions(reflectionText);
+    
     // Add some debugging to see what prompt we're getting
     console.log('Reflection prompt generated:', reflectionText);
+    console.log('Dynamic options:', dynamicOptions);
     console.log('User personality:', userPersonality?.ageGroup);
     
     const reflectionMessage = {
@@ -279,16 +283,22 @@ export default function App() {
       sender: 'bot',
       timestamp: new Date(),
       mood: 'reflection',
-      showMoodButtons: true
+      showMoodButtons: true,
+      dynamicOptions: dynamicOptions.options
     };
     setChatHistory(prev => [...prev, reflectionMessage]);
   };
 
-  const handleMoodSelection = async (mood) => {
+  const handleMoodSelection = async (mood, moodData = null) => {
     setShowMoodSelection(false);
     
+    let messageText = `I'm feeling ${mood}`;
+    if (moodData) {
+      messageText = `${moodData.text} (${moodData.value})`;
+    }
+    
     const userMoodMessage = {
-      text: `I'm feeling ${mood}`,
+      text: messageText,
       sender: 'user',
       timestamp: new Date(),
       mood: mood
@@ -574,15 +584,35 @@ export default function App() {
               
               {msg.showMoodButtons && (
                 <View style={styles.moodButtonsContainer}>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.energizedButton]} 
-                    onPress={() => handleMoodSelection('energized')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '⚡ Energized!' : 
-                       userPersonality?.ageGroup === 'senior' ? '⚡ Vital' : '⚡ Energized'}
-                    </Text>
-                  </TouchableOpacity>
+                  {msg.dynamicOptions ? (
+                    // Dynamic options based on the reflection prompt
+                    msg.dynamicOptions.map((option, index) => (
+                      <TouchableOpacity 
+                        key={index}
+                        style={[
+                          styles.moodButton, 
+                          option.mood === 'positive' ? styles.positiveButton :
+                          option.mood === 'negative' ? styles.negativeButton :
+                          styles.neutralButton
+                        ]} 
+                        onPress={() => handleMoodSelection(option.value, option)}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {option.emoji} {option.text}
+                        </Text>
+                      </TouchableOpacity>
+                    ))
+                  ) : (
+                    <TouchableOpacity 
+                      style={[styles.moodButton, styles.energizedButton]} 
+                      onPress={() => handleMoodSelection('energized')}
+                    >
+                      <Text style={styles.moodButtonText}>
+                        {userPersonality?.ageGroup === 'teen' ? '⚡ Energized!' : 
+                         userPersonality?.ageGroup === 'senior' ? '⚡ Vital' : '⚡ Energized'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                   <TouchableOpacity 
                     style={[styles.moodButton, styles.peacefulButton]} 
                     onPress={() => handleMoodSelection('peaceful')}
@@ -926,6 +956,18 @@ const styles = StyleSheet.create({
   needingSupportButton: {
     backgroundColor: '#FCE4EC',
     borderColor: '#F06292',
+  },
+  positiveButton: {
+    backgroundColor: '#E8F5E8',
+    borderColor: '#81C784',
+  },
+  negativeButton: {
+    backgroundColor: '#FFEBEE',
+    borderColor: '#E57373',
+  },
+  neutralButton: {
+    backgroundColor: '#F5F5F5',
+    borderColor: '#BDBDBD',
   },
   promptInfo: {
     fontSize: 12,
