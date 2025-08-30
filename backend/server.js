@@ -1415,6 +1415,7 @@ app.post('/chat', async (req, res) => {
       
       // Map dynamic mood values to standard moods
       const moodMapping = {
+        // Positive moods
         'focused': 'happy',
         'energized': 'excited',
         'calm': 'peaceful',
@@ -1422,6 +1423,22 @@ app.post('/chat', async (req, res) => {
         'connected': 'happy',
         'inspired': 'excited',
         'rested': 'peaceful',
+        'great': 'happy',
+        'growing': 'excited',
+        'sunny': 'happy',
+        'good': 'happy',
+        
+        // Neutral moods
+        'mixed': 'neutral',
+        'moderate': 'neutral',
+        'somewhat': 'neutral',
+        'some': 'neutral',
+        'okay': 'neutral',
+        'tension': 'neutral',
+        'progress': 'neutral',
+        'mixed': 'neutral',
+        
+        // Negative moods
         'scattered': 'overwhelmed',
         'tired': 'tired',
         'stressed': 'anxious',
@@ -1433,7 +1450,14 @@ app.post('/chat', async (req, res) => {
         'needBoost': 'tired',
         'needSupport': 'sad',
         'needSleep': 'tired',
-        'needTalk': 'sad'
+        'needTalk': 'sad',
+        'uncomfortable': 'sad',
+        'needMove': 'tired',
+        'stuck': 'frustrated',
+        'needDirection': 'overwhelmed',
+        'cloudy': 'sad',
+        'stormy': 'overwhelmed',
+        'notGreat': 'sad'
       };
       
       mood = moodMapping[moodValue] || 'neutral';
