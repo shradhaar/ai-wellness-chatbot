@@ -585,7 +585,7 @@ export default function App() {
               {msg.showMoodButtons && (
                 <View style={styles.moodButtonsContainer}>
                   {msg.dynamicOptions ? (
-                    // Dynamic options based on the reflection prompt
+                    // Dynamic options based on the reflection prompt - exactly 4 options
                     msg.dynamicOptions.map((option, index) => (
                       <TouchableOpacity 
                         key={index}
@@ -603,79 +603,82 @@ export default function App() {
                       </TouchableOpacity>
                     ))
                   ) : (
-                    <TouchableOpacity 
-                      style={[styles.moodButton, styles.energizedButton]} 
-                      onPress={() => handleMoodSelection('energized')}
-                    >
-                      <Text style={styles.moodButtonText}>
-                        {userPersonality?.ageGroup === 'teen' ? '⚡ Energized!' : 
-                         userPersonality?.ageGroup === 'senior' ? '⚡ Vital' : '⚡ Energized'}
-                      </Text>
-                    </TouchableOpacity>
+                    // Fallback to static mood buttons only when no dynamic options
+                    <>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.energizedButton]} 
+                        onPress={() => handleMoodSelection('energized')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '⚡ Energized!' : 
+                           userPersonality?.ageGroup === 'senior' ? '⚡ Vital' : '⚡ Energized'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.peacefulButton]} 
+                        onPress={() => handleMoodSelection('peaceful')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '😌 Chill' : 
+                           userPersonality?.ageGroup === 'senior' ? '😌 Serene' : '😌 Peaceful'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.overwhelmedButton]} 
+                        onPress={() => handleMoodSelection('overwhelmed')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '😵‍💫 Overwhelmed' : 
+                           userPersonality?.ageGroup === 'senior' ? '😵‍💫 Pressured' : '😵‍💫 Overwhelmed'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.gratefulButton]} 
+                        onPress={() => handleMoodSelection('grateful')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '🙏 Grateful' : 
+                           userPersonality?.ageGroup === 'senior' ? '🙏 Appreciative' : '🙏 Grateful'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.creativeButton]} 
+                        onPress={() => handleMoodSelection('creative')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '🎨 Creative' : 
+                           userPersonality?.ageGroup === 'senior' ? '🎨 Inspired' : '🎨 Creative'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.uncertainButton]} 
+                        onPress={() => handleMoodSelection('uncertain')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '🤔 Uncertain' : 
+                           userPersonality?.ageGroup === 'senior' ? '🤔 Contemplative' : '🤔 Uncertain'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.connectedButton]} 
+                        onPress={() => handleMoodSelection('connected')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '💫 Connected' : 
+                           userPersonality?.ageGroup === 'senior' ? '💫 Bonded' : '💫 Connected'}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.moodButton, styles.needingSupportButton]} 
+                        onPress={() => handleMoodSelection('needingSupport')}
+                      >
+                        <Text style={styles.moodButtonText}>
+                          {userPersonality?.ageGroup === 'teen' ? '🆘 Need Support' : 
+                           userPersonality?.ageGroup === 'senior' ? '🆘 Seeking Help' : '🆘 Need Support'}
+                        </Text>
+                      </TouchableOpacity>
+                    </>
                   )}
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.peacefulButton]} 
-                    onPress={() => handleMoodSelection('peaceful')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '😌 Chill' : 
-                       userPersonality?.ageGroup === 'senior' ? '😌 Serene' : '😌 Peaceful'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.overwhelmedButton]} 
-                    onPress={() => handleMoodSelection('overwhelmed')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '😵‍💫 Overwhelmed' : 
-                       userPersonality?.ageGroup === 'senior' ? '😵‍💫 Pressured' : '😵‍💫 Overwhelmed'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.gratefulButton]} 
-                    onPress={() => handleMoodSelection('grateful')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '🙏 Grateful' : 
-                       userPersonality?.ageGroup === 'senior' ? '🙏 Appreciative' : '🙏 Grateful'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.creativeButton]} 
-                    onPress={() => handleMoodSelection('creative')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '🎨 Creative' : 
-                       userPersonality?.ageGroup === 'senior' ? '🎨 Inspired' : '🎨 Creative'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.uncertainButton]} 
-                    onPress={() => handleMoodSelection('uncertain')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '🤔 Uncertain' : 
-                       userPersonality?.ageGroup === 'senior' ? '🤔 Contemplative' : '🤔 Uncertain'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.connectedButton]} 
-                    onPress={() => handleMoodSelection('connected')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '💫 Connected' : 
-                       userPersonality?.ageGroup === 'senior' ? '💫 Bonded' : '💫 Connected'}
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.moodButton, styles.needingSupportButton]} 
-                    onPress={() => handleMoodSelection('needingSupport')}
-                  >
-                    <Text style={styles.moodButtonText}>
-                      {userPersonality?.ageGroup === 'teen' ? '🆘 Need Support' : 
-                       userPersonality?.ageGroup === 'senior' ? '🆘 Seeking Help' : '🆘 Need Support'}
-                    </Text>
-                  </TouchableOpacity>
                 </View>
               )}
             </View>
