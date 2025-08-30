@@ -4,7 +4,13 @@ import { Platform, View, Text, StyleSheet } from 'react-native';
 import './AvatarAnimations.css';
 import { analyzeConversationSentiment, getEmojiForEmotion } from '../utils/sentimentAnalyzer';
 
-export default function LottieAvatar({ mood = 'neutral', conversationHistory = [], currentMessage = '' }) {
+export default function LottieAvatar({ 
+  mood = 'neutral', 
+  conversationHistory = [], 
+  currentMessage = '', 
+  activeEmoji = null,
+  sentimentConfidence = 0.5
+}) {
   const [analyzedMood, setAnalyzedMood] = useState(mood);
   const [sentimentEmoji, setSentimentEmoji] = useState('😐');
   
@@ -25,6 +31,13 @@ export default function LottieAvatar({ mood = 'neutral', conversationHistory = [
       setSentimentEmoji(getEmojiForEmotion(mood));
     }
   }, [conversationHistory, currentMessage, mood]);
+  
+  // Use active emoji from parent if provided and sentiment is strong
+  useEffect(() => {
+    if (activeEmoji && sentimentConfidence > 0.3) {
+      setSentimentEmoji(activeEmoji);
+    }
+  }, [activeEmoji, sentimentConfidence]);
   
   // Use analyzed mood for configuration
   const moodConfig = {

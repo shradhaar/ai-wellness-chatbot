@@ -81,28 +81,54 @@ export function analyzeConversationSentiment(conversationHistory, currentMessage
   const currentText = (currentMessage || '').toLowerCase();
   const fullText = allText + ' ' + currentText;
   
-  // Calculate emotion scores
+  // Calculate emotion scores with enhanced weighting
   const emotionScores = {};
   
-  // Analyze positive emotions
+  // Analyze positive emotions with recent message emphasis
   Object.keys(emotionKeywords.positive).forEach(emotion => {
     const keywords = emotionKeywords.positive[emotion];
-    const score = keywords.reduce((total, keyword) => {
+    let score = 0;
+    
+    // Base score from all conversation
+    score += keywords.reduce((total, keyword) => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-      const matches = (fullText.match(regex) || []).length;
+      const matches = (allText.match(regex) || []).length;
       return total + matches;
     }, 0);
+    
+    // Bonus score for current message (more recent = more important)
+    if (currentText) {
+      score += keywords.reduce((total, keyword) => {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+        const matches = (currentText.match(regex) || []).length;
+        return total + (matches * 2); // Double weight for current message
+      }, 0);
+    }
+    
     emotionScores[emotion] = score;
   });
   
-  // Analyze negative emotions
+  // Analyze negative emotions with recent message emphasis
   Object.keys(emotionKeywords.negative).forEach(emotion => {
     const keywords = emotionKeywords.negative[emotion];
-    const score = keywords.reduce((total, keyword) => {
+    let score = 0;
+    
+    // Base score from all conversation
+    score += keywords.reduce((total, keyword) => {
       const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
-      const matches = (fullText.match(regex) || []).length;
+      const matches = (allText.match(regex) || []).length;
       return total + matches;
     }, 0);
+    
+    // Bonus score for current message (more recent = more important)
+    if (currentText) {
+      score += keywords.reduce((total, keyword) => {
+        const regex = new RegExp(`\\b${keyword}\\b`, 'gi');
+        const matches = (currentText.match(regex) || []).length;
+        return total + (matches * 2); // Double weight for current message
+      }, 0);
+    }
+    
     emotionScores[emotion] = score;
   });
   

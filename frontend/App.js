@@ -346,19 +346,49 @@ export default function App() {
   };
 
   // Real-time sentiment analysis for dynamic emoji changes
-  const analyzeConversationSentiment = () => {
-    if (chatHistory.length === 0) return 'neutral';
-    
-    // Import the sentiment analyzer
-    const { analyzeConversationSentiment: analyzeSentiment } = require('./utils/sentimentAnalyzer');
-    
-    try {
-      const sentiment = analyzeSentiment(chatHistory, message);
-      return sentiment.emotion;
-    } catch (error) {
-      console.log('Sentiment analysis error:', error);
-      return 'neutral';
+  const [conversationSentiment, setConversationSentiment] = useState({ emotion: 'neutral', emoji: '😐', confidence: 0.5 });
+  
+  // Actively analyze conversation sentiment whenever chat history or message changes
+  useEffect(() => {
+    if (chatHistory.length > 0) {
+      try {
+        const { analyzeConversationSentiment: analyzeSentiment } = require('./utils/sentimentAnalyzer');
+        const sentiment = analyzeSentiment(chatHistory, message);
+        setConversationSentiment(sentiment);
+        
+        // Log sentiment analysis for debugging
+        console.log('🎭 Active Sentiment Analysis:', {
+          emotion: sentiment.emotion,
+          emoji: sentiment.emoji,
+          confidence: sentiment.confidence,
+          messageCount: chatHistory.length,
+          currentMessage: message
+        });
+      } catch (error) {
+        console.log('Sentiment analysis error:', error);
+        setConversationSentiment({ emotion: 'neutral', emoji: '😐', confidence: 0.5 });
+      }
     }
+  }, [chatHistory, message]);
+  
+  // Get the most appropriate emoji based on conversation sentiment
+  const getActiveEmoji = () => {
+    // If we have a strong sentiment signal, use it
+    if (conversationSentiment.confidence > 0.3) {
+      return conversationSentiment.emoji;
+    }
+    
+    // Fallback to current mood if sentiment is weak
+    return currentMood === 'happy' ? '😊' : 
+           currentMood === 'sad' ? '😔' : 
+           currentMood === 'excited' ? '😄' : 
+           currentMood === 'peaceful' ? '😌' : 
+           currentMood === 'overwhelmed' ? '😵‍💫' : 
+           currentMood === 'grateful' ? '🙏' : 
+           currentMood === 'creative' ? '🎨' : 
+           currentMood === 'uncertain' ? '🤔' : 
+           currentMood === 'connected' ? '💫' : 
+           currentMood === 'needingSupport' ? '🆘' : '😐';
   };
 
   const welcomeSteps = [
@@ -524,6 +554,18 @@ export default function App() {
                  userPersonality.ageGroup === 'senior' ? '👴 Senior Mode' : '💫 Wellness Mode'}
               </Text>
             )}
+            
+            {/* Real-time sentiment indicator */}
+            {conversationSentiment.confidence > 0.3 && (
+              <View style={styles.sentimentIndicator}>
+                <Text style={styles.sentimentText}>
+                  🎭 {conversationSentiment.emoji} {conversationSentiment.emotion.charAt(0).toUpperCase() + conversationSentiment.emotion.slice(1)}
+                </Text>
+                <Text style={styles.confidenceText}>
+                  Confidence: {Math.round(conversationSentiment.confidence * 100)}%
+                </Text>
+              </View>
+            )}
             {userName && (
               <TouchableOpacity 
                 onPress={clearSavedUserData}
@@ -555,9 +597,11 @@ export default function App() {
           </View>
           <View style={styles.avatarWrapper}>
             <LottieAvatar 
-              mood={currentMood} 
+              mood={conversationSentiment.emotion} 
               conversationHistory={chatHistory}
               currentMessage={message}
+              activeEmoji={getActiveEmoji()}
+              sentimentConfidence={conversationSentiment.confidence}
             />
           </View>
         </View>
@@ -1012,5 +1056,27 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 2,
     marginBottom: 5,
+  },
+  sentimentIndicator: {
+    backgroundColor: '#F0F8FF',
+    borderWidth: 1,
+    borderColor: '#87CEEB',
+    borderRadius: 8,
+    padding: 6,
+    marginTop: 4,
+    marginBottom: 5,
+  },
+  sentimentText: {
+    fontSize: 11,
+    color: '#4682B4',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  confidenceText: {
+    fontSize: 9,
+    color: '#87CEEB',
+    textAlign: 'center',
+    marginTop: 2,
+    fontStyle: 'italic',
   },
 }); 
