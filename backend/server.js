@@ -704,9 +704,9 @@ function ensureGentleResponse(response, context, userInfo = null) {
     }
   });
   
-  // Only add supportive phrases in the first 2 messages to avoid repetition
+  // Only add supportive phrases in the very first message to avoid repetition
   const messageCount = userInfo?.conversationCount || 0;
-  if (messageCount <= 2 && !gentleResponse.includes("I'm here") && !gentleResponse.includes("I'm listening") && !gentleResponse.includes("support")) {
+  if (messageCount === 0 && !gentleResponse.includes("I'm here") && !gentleResponse.includes("I'm listening") && !gentleResponse.includes("support")) {
     const supportivePhrases = [
       "I'm here to listen.",
       "I'm here for you.",
