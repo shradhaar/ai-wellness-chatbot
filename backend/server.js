@@ -1368,7 +1368,8 @@ app.post('/chat', async (req, res) => {
         },
         locationPhrases: {
           used: [],
-          lastUsed: null
+          lastUsed: null,
+          conversationCount: 0
         }
       };
       userData.set(userKey, userInfo);
@@ -1376,6 +1377,13 @@ app.post('/chat', async (req, res) => {
     
     // Update user info
     userInfo.lastInteraction = new Date();
+    
+    // Reset location reference count for new conversation (if more than 30 minutes have passed)
+    const timeSinceLastInteraction = userInfo.lastInteraction - (userInfo.lastInteraction || new Date());
+    if (timeSinceLastInteraction > 30 * 60 * 1000) { // 30 minutes
+      resetLocationReferenceCount(userInfo);
+    }
+    
     if (userName && !userInfo.name) {
       userInfo.name = userName;
       console.log('Stored new user name:', userName);
@@ -1539,6 +1547,12 @@ app.post('/chat', async (req, res) => {
       // Check if user has completed onboarding (has stored name, age, gender, location)
       const hasCompletedOnboarding = userInfo.name && userInfo.age && userInfo.gender && userInfo.location;
       
+      // Reset location reference counter for new conversations (every 10+ messages)
+      if (userInfo.conversationCount >= 10) {
+        userInfo.locationPhrases.conversationCount = 0;
+        userInfo.locationPhrases.used = [];
+      }
+      
       if (userInfo.relationship === 'new' && userInfo.conversationCount <= 5 && !hasCompletedOnboarding) {
         // Only use getting-to-know-you if user hasn't completed onboarding
         response = handleGettingToKnowYou(message, userName, userInfo, message.toLowerCase(), userName ? `, ${userName}` : '');
@@ -1574,6 +1588,13 @@ app.post('/chat', async (req, res) => {
     
     // Enhance response continuity
     const continuousResponse = enhanceResponseContinuity(response.reply, userInfo, message);
+    
+    // Track location references to limit their use
+    if (detectLocationReference(continuousResponse, userInfo.location)) {
+      userInfo.locationPhrases.conversationCount++;
+      userInfo.locationPhrases.lastUsed = new Date();
+      console.log(`Location reference detected. Count: ${userInfo.locationPhrases.conversationCount}/2`);
+    }
     
     // Ensure the response is gentle and non-judgmental
     const context = responseManager.getContext(userId);
@@ -1635,12 +1656,16 @@ Your conversation style should be:
 - Be direct and to the point while maintaining warmth
 - No long explanations or multiple paragraphs
 
-IMPORTANT LOCATION REFERENCE RULES:
-- If referencing ${userLocation}, use VARIED phrases - never repeat the same expression
+CRITICAL LOCATION REFERENCE RULES:
+- Use location references EXTREMELY SPARINGLY - maximum 1 time per conversation, preferably less
+- Location references should feel natural and contextual, not forced into every response
 - For California: mix up "Golden State", "Cali", "West Coast", "Pacific Coast", "SoCal/NorCal", "California sunshine", "West Coast vibes"
 - For other locations: use diverse cultural references, local landmarks, or regional expressions
 - Avoid repetitive phrases like "under the stars" or "thinking of you in [location]"
-- Make location references feel natural and varied, not formulaic
+- Make location references feel organic and occasional, not forced or overused
+- Focus on emotional connection and support rather than geographical references
+- Only reference location when it genuinely adds warmth or cultural connection
+- REMEMBER: Most conversations should have ZERO location references - they're special touches, not regular features
 
 Current conversation context:
 - User: ${name}
@@ -1684,7 +1709,13 @@ Remember: You're having a real conversation with someone you care about, not pro
 
 LOCATION VARIETY CHECK: If you mention ${userLocation}, ensure you're using a different phrase than you've used before. Mix up your cultural references and avoid repetitive expressions.
 
-LOCATION PHRASE HISTORY: Previously used phrases for ${userLocation}: ${userInfo.locationPhrases?.used?.join(', ') || 'none'}. Use a completely different expression this time.`;
+LOCATION PHRASE HISTORY: Previously used phrases for ${userLocation}: ${userInfo.locationPhrases?.used?.join(', ') || 'none'}. Use a completely different expression this time.
+
+LOCATION REFERENCE LIMIT: You have used location references ${userInfo.locationPhrases?.conversationCount || 0} times in this conversation. MAXIMUM: 1 time per conversation. If you've already used 1 location reference, DO NOT mention location again.
+
+CRITICAL: Use location references EXTREMELY sparingly (maximum 1 time per conversation). Focus on emotional support and connection rather than geographical references. Only mention location when it genuinely adds warmth or cultural connection. If you've already referenced location once, focus entirely on emotional support without any geographical mentions.
+
+LOCATION PROBABILITY: Only 20% of your responses should include location references. Most of the time, focus purely on emotional support, personal connection, and helpful conversation without any geographical mentions.`;
   
   return context;
 }
@@ -1789,6 +1820,56 @@ function getCulturalStyle(location) {
   if (locationLower.includes('japan')) return 'Use respectful and formal expressions';
   if (locationLower.includes('china')) return 'Use respectful expressions with cultural awareness';
   return 'Use universal expressions with cultural sensitivity';
+}
+
+// Function to detect if a response contains location references
+function detectLocationReference(response, userLocation) {
+  if (!userLocation || !response) return false;
+  
+  const locationLower = userLocation.toLowerCase();
+  const responseLower = response.toLowerCase();
+  
+  // Check for various location reference patterns
+  const locationPatterns = [
+    locationLower,
+    'golden state',
+    'west coast',
+    'pacific coast',
+    'cali',
+    'socal',
+    'norcal',
+    'california',
+    'big apple',
+    'nyc',
+    'manhattan',
+    'brooklyn',
+    'london',
+    'british',
+    'thames'
+  ];
+  
+  return locationPatterns.some(pattern => responseLower.includes(pattern));
+}
+
+// Function to check if location reference should be allowed in current conversation
+function shouldAllowLocationReference(userInfo) {
+  if (!userInfo.locationPhrases) return true;
+  return userInfo.locationPhrases.conversationCount < 1;
+}
+
+// Function to increment location reference count for current conversation
+function incrementLocationReferenceCount(userInfo) {
+  if (!userInfo.locationPhrases) {
+    userInfo.locationPhrases = { used: [], lastUsed: null, conversationCount: 0 };
+  }
+  userInfo.locationPhrases.conversationCount++;
+}
+
+// Function to reset location reference count for new conversation
+function resetLocationReferenceCount(userInfo) {
+  if (userInfo.locationPhrases) {
+    userInfo.locationPhrases.conversationCount = 0;
+  }
 }
 
 // Function to generate varied location-based phrases to prevent repetition
