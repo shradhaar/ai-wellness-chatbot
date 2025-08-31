@@ -674,7 +674,7 @@ function handleDistressResponse(userId, mood, intensity, nameCall) {
 }
 
 // Function to ensure all responses are gentle and non-judgmental
-function ensureGentleResponse(response, context) {
+function ensureGentleResponse(response, context, userInfo = null) {
   // Check if response is valid
   if (!response || typeof response !== 'string') {
     return "I'm here to listen and support you.";
@@ -704,9 +704,18 @@ function ensureGentleResponse(response, context) {
     }
   });
   
-  // Ensure the response ends with support rather than judgment
-  if (!gentleResponse.includes("I'm here") && !gentleResponse.includes("I'm listening") && !gentleResponse.includes("support")) {
-    gentleResponse = `${gentleResponse} I'm here to listen.`;
+  // Only add supportive phrases in the first 2 messages to avoid repetition
+  const messageCount = userInfo?.conversationCount || 0;
+  if (messageCount <= 2 && !gentleResponse.includes("I'm here") && !gentleResponse.includes("I'm listening") && !gentleResponse.includes("support")) {
+    const supportivePhrases = [
+      "I'm here to listen.",
+      "I'm here for you.",
+      "I'm listening.",
+      "I'm here to support you.",
+      "I'm here with you."
+    ];
+    const randomPhrase = supportivePhrases[Math.floor(Math.random() * supportivePhrases.length)];
+    gentleResponse = `${gentleResponse} ${randomPhrase}`;
   }
   
   return gentleResponse;
@@ -1598,7 +1607,7 @@ app.post('/chat', async (req, res) => {
     
     // Ensure the response is gentle and non-judgmental
     const context = responseManager.getContext(userId);
-    const gentleResponse = ensureGentleResponse(continuousResponse, context);
+    const gentleResponse = ensureGentleResponse(continuousResponse, context, userInfo);
     
     // Update context tracking
     const topics = extractTopicsFromMessage(message, message.toLowerCase());
