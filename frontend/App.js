@@ -178,7 +178,7 @@ export default function App() {
       
       const welcomeMessages = [
         {
-          text: `${personality.personalizedIntro}\n\nI see you're ${userAge} years old, identify as ${userGender}, and you're from ${userLocation}. This helps me provide more personalized and culturally relevant support that matches your ${personality.ageLabel} experience.\n\nI'm here to be your ${personality.approach}, and I'm genuinely excited to get to know you better. I love deep conversations and find beauty in helping others navigate their emotions.\n\n${randomStarter}`,
+          text: `${personality.personalizedIntro} I'm here to be your ${personality.approach}. ${randomStarter}`,
           sender: 'bot',
           timestamp: new Date(),
           mood: 'happy'

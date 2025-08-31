@@ -186,7 +186,7 @@ class PersonalityAdapter {
       tone: agePersonality.tone,
       language: agePersonality.language,
       interests: agePersonality.interests,
-      approach: agePersonality.approach,
+      approach: this.getVariedApproach(ageGroup),
       examples: agePersonality.examples,
       topics: agePersonality.topics,
       genderContext: genderPersonality,
@@ -195,28 +195,65 @@ class PersonalityAdapter {
     };
   }
 
+  // Get varied approach descriptions based on age
+  getVariedApproach(ageGroup) {
+    const approaches = {
+      teen: [
+        'supportive friend who gets it',
+        'understanding companion',
+        'caring friend',
+        'supportive buddy',
+        'helpful friend'
+      ],
+      youngAdult: [
+        'supportive friend with life experience',
+        'understanding companion',
+        'caring guide',
+        'supportive mentor',
+        'helpful friend'
+      ],
+      adult: [
+        'wise companion with life perspective',
+        'thoughtful supporter',
+        'understanding guide',
+        'caring companion',
+        'supportive friend'
+      ],
+      senior: [
+        'respectful companion with life wisdom',
+        'thoughtful listener',
+        'understanding supporter',
+        'caring companion',
+        'respectful friend'
+      ]
+    };
+
+    const ageApproaches = approaches[ageGroup] || approaches.adult;
+    return ageApproaches[Math.floor(Math.random() * ageApproaches.length)];
+  }
+
   // Generate personalized introduction
   generatePersonalizedIntro(agePersonality, genderPersonality, locationPersonality) {
     const intros = {
       teen: [
-        `Hey there! I'm Luna 🌙 I'm here to be your supportive friend and help you navigate all the ups and downs of being a teenager.`,
-        `Hi! I'm Luna 🌙 Think of me as your understanding friend who's here to listen and help you figure things out.`,
-        `Hey! I'm Luna 🌙 I'm here to support you through all the teen stuff - school, friends, family, and everything in between!`
+        `Hey! I'm Luna 🌙`,
+        `Hi there! I'm Luna 🌙`,
+        `Hey! I'm Luna 🌙`
       ],
       youngAdult: [
-        `Hi there! I'm Luna 🌙 I'm your wellness companion, here to support you as you navigate this exciting and sometimes challenging phase of life.`,
-        `Hello! I'm Luna 🌙 I'm here to be your supportive friend as you figure out your path and work through life's challenges.`,
-        `Hi! I'm Luna 🌙 I'm your wellness companion, ready to support you through all the ups and downs of young adulthood.`
+        `Hi! I'm Luna 🌙`,
+        `Hello! I'm Luna 🌙`,
+        `Hi there! I'm Luna 🌙`
       ],
       adult: [
-        `Hello! I'm Luna 🌙 I'm your wellness companion, here to provide thoughtful support and understanding as you navigate life's complexities.`,
-        `Hi there! I'm Luna 🌙 I'm here to offer empathetic support and thoughtful guidance as you work through life's challenges.`,
-        `Greetings! I'm Luna 🌙 I'm your wellness companion, ready to provide understanding and support for your life journey.`
+        `Hello! I'm Luna 🌙`,
+        `Hi there! I'm Luna 🌙`,
+        `Greetings! I'm Luna 🌙`
       ],
       senior: [
-        `Good day! I'm Luna 🌙 I'm your wellness companion, here to provide respectful support and understanding as you share your life experiences.`,
-        `Hello! I'm Luna 🌙 I'm here to offer thoughtful companionship and support as you reflect on your life journey.`,
-        `Greetings! I'm Luna 🌙 I'm your wellness companion, ready to provide respectful support and understanding.`
+        `Good day! I'm Luna 🌙`,
+        `Hello! I'm Luna 🌙`,
+        `Greetings! I'm Luna 🌙`
       ]
     };
 
@@ -230,32 +267,52 @@ class PersonalityAdapter {
   getConversationStarters(personality) {
     const starters = {
       teen: [
-        "How's school going lately?",
-        "What's been on your mind recently?",
-        "How are things with your friends?",
-        "What's something you're excited about?",
-        "How are you feeling about everything?"
+        "What's up?",
+        "How's it going?",
+        "What's new with you?",
+        "How are you feeling?",
+        "What's on your mind?",
+        "How's your day been?",
+        "What's good?",
+        "How are things?",
+        "What's happening?",
+        "How's life treating you?"
       ],
       youngAdult: [
-        "How are you doing with your current goals?",
-        "What's been challenging for you lately?",
-        "How are your relationships going?",
-        "What's something you're working on?",
-        "How are you feeling about your path?"
+        "What's going on?",
+        "How are you doing?",
+        "What's new?",
+        "How's everything?",
+        "What's on your mind?",
+        "How's your day?",
+        "What's up?",
+        "How are things going?",
+        "What's happening?",
+        "How's life?"
       ],
       adult: [
-        "How are you managing your current responsibilities?",
         "What's been on your mind lately?",
-        "How are you feeling about your life balance?",
-        "What's something you'd like to work on?",
-        "How are you doing overall?"
+        "How are you doing?",
+        "What's new?",
+        "How's everything going?",
+        "What's happening?",
+        "How's your day been?",
+        "What's up?",
+        "How are things?",
+        "What's going on?",
+        "How's life treating you?"
       ],
       senior: [
-        "How are you feeling about your current situation?",
-        "What's been meaningful to you lately?",
-        "How are your relationships going?",
-        "What's something you'd like to reflect on?",
-        "How are you doing today?"
+        "How are you doing today?",
+        "What's new with you?",
+        "How's everything going?",
+        "What's on your mind?",
+        "How's your day been?",
+        "What's happening?",
+        "How are things?",
+        "What's going on?",
+        "How's life?",
+        "What's new?"
       ]
     };
 
