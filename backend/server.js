@@ -1230,7 +1230,7 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   
   // Check for specific questions or topics
   if (lowerMessage.includes('name') || lowerMessage.includes('call me') || lowerMessage.includes('who am i')) {
-    baseResponse = `You're ${currentName}${currentNameCall}! ${userInfo.age}, ${userInfo.gender}, ${userInfo.location}. I remember! 🌙`;
+    baseResponse = `You're ${currentName}${currentNameCall}! I remember you 🌙`;
   } else if (lowerMessage.includes('water polo') || lowerMessage.includes('game') || lowerMessage.includes('sport')) {
     baseResponse = `Water polo is awesome${currentNameCall}! How was your game?`;
   } else if (lowerMessage.includes('feeling') || lowerMessage.includes('mood') || lowerMessage.includes('sad') || lowerMessage.includes('happy')) {
@@ -1242,8 +1242,8 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   } else {
     // Varied responses for new users
     const responses = [
-      `Hi${currentNameCall}! What's on your mind?`,
-      `Hello${currentNameCall}! I'm Luna. What's up?`,
+      `Hi${currentNameCall}! What's up?`,
+      `Hey${currentNameCall}! I'm Luna. What's on your mind?`,
       `Welcome${currentNameCall}! How are you?`,
       `Hi there${currentNameCall}! I'm Luna 🌙. What's happening?`
     ];
@@ -1252,7 +1252,7 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   
   // For severe distress, use specialized gentle responses
   if (intensity === 'severe' && (mood === 'sad' || mood === 'anxious' || mood === 'angry')) {
-    baseResponse = `I can sense you're going through something really difficult${currentNameCall}. I'm here with you, and it's okay to not be okay. Would you like to talk about what's happening?`;
+    baseResponse = `I can sense you're going through something really difficult${currentNameCall}. I'm here with you. Would you like to talk about what's happening?`;
   }
   
   // Varied tone adaptation based on mood
@@ -1518,7 +1518,7 @@ app.post('/chat', async (req, res) => {
             temperature: 0.8,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 150
+            maxOutputTokens: 100
           }
         }
       );
@@ -1652,9 +1652,10 @@ Your conversation style should be:
 - Reference shared interests and previous conversations naturally
 - Ask thoughtful follow-up questions that show you're listening
 - Be present and supportive, not trying to "fix" problems
-- Keep responses very concise (1-2 sentences max) - be brief and impactful!
-- Be direct and to the point while maintaining warmth
-- No long explanations or multiple paragraphs
+- Keep responses human and conversational - 1-2 sentences max unless absolutely necessary
+- Be direct and warm, like talking to a friend
+- Only use longer responses when someone needs deep emotional support
+- Sound natural, not like a textbook or therapy session
 
 CRITICAL LOCATION REFERENCE RULES:
 - Use location references EXTREMELY SPARINGLY - maximum 1 time per conversation, preferably less
@@ -1695,9 +1696,9 @@ Current conversation context:
   context += `\n\n${name} just said: "${currentMessage}"
 
 Please respond as Luna would:
-- Keep your response natural and conversational (150-300 words)
+- Keep your response natural and conversational - 1-2 sentences max unless they need deep emotional support
 - Show you remember and care about what ${name} has shared
-- If they're continuing a previous topic, acknowledge that continuity
+- If they're continuing a previous topic, acknowledge that naturally
 - If they're sharing something new, respond with genuine curiosity
 - Use warm, empathetic language that feels human and personal
 - Avoid generic phrases like "I understand" or "That's interesting"
@@ -1705,7 +1706,7 @@ Please respond as Luna would:
 - Be supportive without being overly clinical or therapeutic
 - Remember their age, gender, and cultural background in your response
 
-Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${name}'s experience.
+Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${name}'s experience. Sound like a caring friend, not a professional counselor.
 
 LOCATION VARIETY CHECK: If you mention ${userLocation}, ensure you're using a different phrase than you've used before. Mix up your cultural references and avoid repetitive expressions.
 
