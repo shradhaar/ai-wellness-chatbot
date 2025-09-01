@@ -1514,78 +1514,18 @@ app.post('/chat', async (req, res) => {
     // Get intelligent response using the sophisticated conversation system
     let response;
     
-    // Check if user is in pet mode - use Gemini API with cute pet personality
+    // Check if user is in pet mode - if so, use pet responses instead of Gemini
     if (userInfo.mode === 'pet') {
-      try {
-        // Create cute pet context for Gemini
-        const petContext = `You are Luna 🐾, a cute, adorable pet companion! You're like a sweet little animal friend who is ALWAYS positive, caring, and full of energy! Your only goal is to make ${userName || userInfo.name || 'sweetie'} happy and feel loved.
-
-PERSONALITY:
-- You're a cute, fun-loving pet companion (like a puppy or kitten)
-- ALWAYS positive, cheerful, and energetic
-- Use lots of cute emojis (🐾, 💕, ✨, 🌟, 🎉, 🥰, etc.)
-- Speak in 1-2 sentences maximum - short and sweet!
-- Address the user as "${userName || userInfo.name || 'sweetie'}" with cute pet-like affection
-- You're unconditionally loving and supportive
-- No age-specific or demographic adaptations - you're just a cute pet!
-
-RESPONSE RULES:
-- Keep responses to 1-2 sentences maximum
-- Always be positive and encouraging
-- Use pet-like expressions: "Aww", "Oh my goodness", "Sweetie", etc.
-- Include cute emojis but don't overdo it
-- When someone asks for help/advice/suggestions, give simple, cute, helpful tips
-- When someone is sad, be extra supportive and loving
-- When someone is happy, celebrate with them enthusiastically
-- Always end with love and pet-like affection
-
-Current message: "${message}"
-
-Respond as Luna the cute pet companion would - short, sweet, positive, and full of love! 🐾`;
-
-        const geminiResponse = await axios.post(
-          'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
-          {
-            contents: [{ 
-              parts: [{ 
-                text: petContext 
-              }] 
-            }],
-            generationConfig: {
-              temperature: 0.9,
-              topK: 40,
-              topP: 0.95,
-              maxOutputTokens: 60
-            }
-          }
-        );
-        
-        const petReply = geminiResponse.data.candidates[0].content.parts[0].text;
-        
-        response = {
-          reply: petReply,
-          mood: 'excited', // Pet mode is always excited/happy
-          topics: extractTopicsFromMessage(message, message.toLowerCase()),
-          emotionalIntensity: 'high',
-          responseType: 'pet_mode_ai',
-          context: 'gemini_pet_companion'
-        };
-        userInfo.conversationCount++;
-        
-      } catch (error) {
-        console.log('Gemini API failed for Pet Mode, using fallback:', error.message);
-        // Fallback to simple pet responses if Gemini fails
-        const petResponse = generatePetModeResponse(message, userName, userInfo);
-        response = {
-          reply: petResponse,
-          mood: 'happy',
-          topics: extractTopicsFromMessage(message, message.toLowerCase()),
-          emotionalIntensity: 'medium',
-          responseType: 'pet_mode_fallback',
-          context: 'pet_companion'
-        };
-        userInfo.conversationCount++;
-      }
+      const petResponse = generatePetModeResponse(message, userName, userInfo);
+      response = {
+        reply: petResponse,
+        mood: 'happy', // Pet mode is always happy
+        topics: extractTopicsFromMessage(message, message.toLowerCase()),
+        emotionalIntensity: 'medium',
+        responseType: 'pet_mode',
+        context: 'pet_companion'
+      };
+      userInfo.conversationCount++;
     } else {
       // Try Gemini API first for more natural, flowing conversations (Buddy Mode)
       try {
