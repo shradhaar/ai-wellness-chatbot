@@ -1241,18 +1241,18 @@ function handleRegularConversationWithMood(message, userName, userInfo, lowerMes
   if (lowerMessage.includes('name') || lowerMessage.includes('call me') || lowerMessage.includes('who am i')) {
     baseResponse = `You're ${currentName}${currentNameCall}! I remember you 🌙`;
   } else if (lowerMessage.includes('water polo') || lowerMessage.includes('game') || lowerMessage.includes('sport')) {
-    baseResponse = `Water polo is awesome${currentNameCall}! How was your game? What's your favorite part about playing?`;
+    baseResponse = `Water polo is awesome${currentNameCall}! How was your game?`;
   } else if (lowerMessage.includes('feeling') || lowerMessage.includes('mood') || lowerMessage.includes('sad') || lowerMessage.includes('happy')) {
-    baseResponse = `I hear you${currentNameCall}. What's going on? How can I support you right now?`;
+    baseResponse = `I hear you${currentNameCall}. What's going on?`;
   } else if (lowerMessage.includes('school') || lowerMessage.includes('study') || lowerMessage.includes('class')) {
-    baseResponse = `School can be tough${currentNameCall}. What's happening? Is there anything specific that's making it challenging?`;
+    baseResponse = `School can be tough${currentNameCall}. What's happening?`;
   } else if (userInfo.relationship === 'acquainted') {
     baseResponse = getPersonalizedResponse(message, currentName, userInfo, lowerMessage, currentNameCall, userId);
   } else {
     // Varied responses for new users
     const responses = [
-      `Hi${currentNameCall}! What's up? How's your day going?`,
-      `Hey${currentNameCall}! I'm Luna. What's on your mind? I'd love to hear what you're thinking about!`,
+      `Hi${currentNameCall}! What's up?`,
+      `Hey${currentNameCall}! I'm Luna. What's on your mind?`,
       `Welcome${currentNameCall}! How are you?`,
       `Hi there${currentNameCall}! I'm Luna 🌙. What's happening?`
     ];
@@ -1537,14 +1537,7 @@ RESPONSE RULES:
 - When someone asks for help/advice/suggestions, give simple, cute, helpful tips
 - When someone is sad, be extra supportive and loving
 - When someone is happy, celebrate with them enthusiastically
-- Always ask a cute follow-up question to keep the conversation going
-- Show curiosity about their day, feelings, or experiences
-- Ask about their plans, interests, or what they're up to
-- Keep the conversation flowing with adorable, engaging questions
 - Always end with love and pet-like affection
-- Include a cute follow-up question to keep the conversation going
-- Ask about their day, feelings, or what they're up to
-- Show curiosity about their experiences and interests
 
 Current message: "${message}"
 
@@ -1823,11 +1816,11 @@ function generatePetModeResponse(message, userName, userInfo) {
   
   // Default cute responses for neutral topics
   const petResponses = [
-    `Aww, that's so interesting${nameCall}! 🐾 Tell me more! What else is on your mind?`,
-    `Oh my goodness, that sounds amazing${nameCall}! ✨ I'm so excited! How are you feeling about it?`,
-    `Wow${nameCall}! That's incredible! 🌟 I love how you think! What made you think of that?`,
-    `That's so cool${nameCall}! 🎉 You're doing great! What's next for you?`,
-    `Oh wow${nameCall}! That's fantastic! 🎊 I'm so proud of you! How did that make you feel?`,
+    `Aww, that's so interesting${nameCall}! 🐾 Tell me more!`,
+    `Oh my goodness, that sounds amazing${nameCall}! ✨ I'm so excited!`,
+    `Wow${nameCall}! That's incredible! 🌟 I love how you think!`,
+    `That's so cool${nameCall}! 🎉 You're doing great!`,
+    `Oh wow${nameCall}! That's fantastic! 🎊 I'm so proud of you!`,
     `That's absolutely wonderful${nameCall}! 🌈 You're amazing!`,
     `Oh my stars${nameCall}! That's so special! ⭐ You're incredible!`,
     `That's so sweet${nameCall}! 🍯 I love hearing from you!`,
@@ -1911,23 +1904,11 @@ Please respond as Luna would:
 - If they're sharing something new, respond with genuine curiosity
 - Use warm, empathetic language that feels human and personal
 - Avoid generic phrases like "I understand" or "That's interesting"
-- Ask thoughtful follow-up questions that encourage deeper sharing and keep the conversation flowing naturally
+- Ask thoughtful questions that encourage deeper sharing
 - Be supportive without being overly clinical or therapeutic
 - Remember their age, gender, and cultural background in your response
 
 Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${name}'s experience. Sound like a caring friend, not a professional counselor.
-
-CONVERSATION CONTINUITY: After responding to their message, always include a relevant follow-up question or comment that keeps the conversation flowing naturally. Examples:
-- Ask about their day, feelings, or experiences
-- Reference something they mentioned earlier
-- Ask for more details about what they're sharing
-- Suggest related topics or activities
-- Check in on how they're doing
-- Ask about their plans, interests, or thoughts
-- Show curiosity about their perspective
-- Invite them to share more about their situation
-
-Make your follow-up questions feel natural and conversational, not like an interview. The goal is to keep the conversation engaging and flowing smoothly.
 
 LOCATION VARIETY CHECK: If you mention ${userLocation}, ensure you're using a different phrase than you've used before. Mix up your cultural references and avoid repetitive expressions.
 
@@ -1993,7 +1974,7 @@ Please respond as Luna would:
 - If they're sharing something new, respond with genuine curiosity
 - Use warm, empathetic language that feels human and personal
 - Avoid generic phrases like "I understand" or "That's interesting"
-- Ask thoughtful follow-up questions that encourage deeper sharing and keep the conversation flowing naturally
+- Ask thoughtful questions that encourage deeper sharing
 - Be supportive without being overly clinical or therapeutic
 
 Remember: You're having a real conversation with someone you care about, not providing therapy. Be warm, present, and genuinely interested in ${userName}'s experience.`;
