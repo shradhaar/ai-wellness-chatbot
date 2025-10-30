@@ -106,19 +106,15 @@ export default function App() {
       setUserGender(savedData.gender || '');
       setUserLocation(savedData.location || '');
       
-      // Load saved mode
+          // Load saved mode
       try {
         const savedMode = await AsyncStorage.getItem('selectedMode');
         if (savedMode) {
           setSelectedMode(savedMode);
           // Generate personality profile from saved data
           if (savedData.age && savedData.gender && savedData.location) {
-            if (savedMode === 'buddy') {
-              const personality = generateUserPersonality(savedData.age, savedData.gender, savedData.location);
-              setUserPersonality(personality);
-            } else {
-              setUserPersonality({ mode: 'pet', name: 'Luna' });
-            }
+            const personality = generateUserPersonality(savedData.age, savedData.gender, savedData.location);
+            setUserPersonality(personality);
           }
           // Skip onboarding if we have all the data
           setShowWelcome(false);
@@ -175,11 +171,11 @@ export default function App() {
   };
 
   const handleWelcomeStep = () => {
-    if (welcomeStep < 6) {
+    if (welcomeStep < 5) {
       setWelcomeStep(welcomeStep + 1);
-    } else if (welcomeStep === 6) {
-      setShowModeSelection(true);
-      setShowWelcome(false);
+    } else if (welcomeStep === 5) {
+      // Skip mode selection, go straight to buddy mode
+      handleModeSelection('buddy');
     }
   };
 
@@ -201,40 +197,24 @@ export default function App() {
       console.log('User data is complete, saving...');
       saveUserData(userName.trim(), userAge.trim(), userGender.trim(), userLocation.trim());
       
-      if (mode === 'buddy') {
-        console.log('Setting up Buddy Mode...');
-        // Generate personalized personality profile for Buddy Mode
-        const personality = generateUserPersonality(userAge.trim(), userGender.trim(), userLocation.trim());
-        setUserPersonality(personality);
-        
-        // Generate personalized welcome message based on user's personality
-        const conversationStarters = getConversationStarters(personality);
-        const randomStarter = conversationStarters[Math.floor(Math.random() * conversationStarters.length)];
-        
-        const welcomeMessages = [
-          {
-            text: `${personality.personalizedIntro} I'm here to be your ${personality.approach}. ${randomStarter}`,
-            sender: 'bot',
-            timestamp: new Date(),
-            mood: 'happy'
-          }
-        ];
-        setChatHistory(welcomeMessages);
-      } else {
-        console.log('Setting up Pet Mode...');
-        // Pet Mode - no personality adaptation, just cute responses
-        setUserPersonality({ mode: 'pet', name: 'Luna' });
-        
-        const welcomeMessages = [
-          {
-            text: `Hi ${userName}! I'm Luna, your cute little pet companion! 🐾 I'm here to make you happy and keep you motivated! What's on your mind today?`,
-            sender: 'bot',
-            timestamp: new Date(),
-            mood: 'excited'
-          }
-        ];
-        setChatHistory(welcomeMessages);
-      }
+      console.log('Setting up Buddy Mode...');
+      // Generate personalized personality profile for Buddy Mode
+      const personality = generateUserPersonality(userAge.trim(), userGender.trim(), userLocation.trim());
+      setUserPersonality(personality);
+      
+      // Generate personalized welcome message based on user's personality
+      const conversationStarters = getConversationStarters(personality);
+      const randomStarter = conversationStarters[Math.floor(Math.random() * conversationStarters.length)];
+      
+      const welcomeMessages = [
+        {
+          text: `${personality.personalizedIntro} I'm here to be your ${personality.approach}. ${randomStarter}`,
+          sender: 'bot',
+          timestamp: new Date(),
+          mood: 'happy'
+        }
+      ];
+      setChatHistory(welcomeMessages);
     } else {
       console.log('User data incomplete:', { userName, userAge, userGender, userLocation });
     }
@@ -248,40 +228,45 @@ export default function App() {
   const sendMessage = async () => {
     if (!message.trim()) return;
 
+    const currentMessage = message;
     const userMessage = { text: message, sender: 'user', timestamp: new Date() };
-    setChatHistory(prev => [...prev, userMessage]);
+    
+    // Store current message and clear input
     setMessage('');
     setIsLoading(true);
 
     try {
+      // Send history BEFORE adding current message to avoid duplicates
       const response = await fetch('http://localhost:8085/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ 
-          message: message, 
+          message: currentMessage, 
           userName: userName,
           userAge: userAge,
           userGender: userGender,
           userLocation: userLocation,
           userId: userId,
-          mode: selectedMode
+          mode: selectedMode,
+          conversationHistory: chatHistory // Send existing history only
         }),
       });
 
       const data = await response.json();
       
+      // Add user message and bot response together
       const botMessage = {
         text: data.reply,
         sender: 'bot',
         timestamp: new Date(),
         mood: data.mood
       };
-
-      setChatHistory(prev => [...prev, botMessage]);
+      
+      setChatHistory(prev => [...prev, userMessage, botMessage]);
       setCurrentMood(data.mood);
-      await saveMood(data.mood, message, data.reply);
+      await saveMood(data.mood, currentMessage, data.reply);
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -377,7 +362,8 @@ export default function App() {
           userGender: userGender,
           userLocation: userLocation,
           userId: userId,
-          mode: selectedMode
+          mode: selectedMode,
+          conversationHistory: chatHistory
         })
       });
       const data = await response.json();
@@ -496,12 +482,7 @@ export default function App() {
     {
       title: "How can I help?",
       message: botInfo?.askHelp || "Is there anything specific you'd like help with? I'm here to listen, offer support, and help you feel better.",
-      button: "Continue"
-    },
-    {
-      title: "Choose Your Companion",
-      message: "Now, let's choose how you'd like to interact with me! Pick the mode that feels right for you.",
-      button: "Select Mode"
+      button: "Let's get started"
     }
   ];
 
@@ -518,8 +499,7 @@ export default function App() {
                 welcomeStep === 2 ? "neutral" :
                 welcomeStep === 3 ? "reflection" :
                 welcomeStep === 4 ? "neutral" :
-                welcomeStep === 5 ? "excited" :
-                welcomeStep === 6 ? "excited" : "happy"
+                welcomeStep === 5 ? "excited" : "happy"
               }
               conversationHistory={[]}
               currentMessage=""
@@ -629,17 +609,6 @@ export default function App() {
                 Your adaptive wellness companion who grows with you, understands your age, location, and provides personalized support.
               </Text>
             </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modeOption} 
-              onPress={() => handleModeSelection('pet')}
-            >
-              <Text style={styles.modeEmoji}>🐾</Text>
-              <Text style={styles.modeTitle}>Pet Mode</Text>
-              <Text style={styles.modeDescription}>
-                Your cute, fun pet companion who keeps you happy and motivated with adorable, positive responses!
-              </Text>
-            </TouchableOpacity>
           </View>
         </View>
       </SafeAreaView>
@@ -657,8 +626,7 @@ export default function App() {
             <Text style={styles.title}>Luna 🌙</Text>
             {userPersonality && (
               <Text style={styles.personalityMode}>
-                {userPersonality.mode === 'pet' ? '🐾 Pet Mode' :
-                 userPersonality.ageGroup === 'teen' ? '😊 Teen Mode' :
+                {userPersonality.ageGroup === 'teen' ? '😊 Teen Mode' :
                  userPersonality.ageGroup === 'youngAdult' ? '🌟 Young Adult Mode' :
                  userPersonality.ageGroup === 'adult' ? '💼 Adult Mode' :
                  userPersonality.ageGroup === 'senior' ? '👴 Senior Mode' : '💫 Wellness Mode'}
@@ -681,23 +649,15 @@ export default function App() {
                 onPress={clearSavedUserData}
                 onLongPress={() => {
                   if (userPersonality) {
-                    if (userPersonality.mode === 'pet') {
-                      const profile = `Your Luna Profile:\n\n` +
-                        `Mode: 🐾 Pet Mode\n` +
-                        `Companion: ${userPersonality.name}\n\n` +
-                        `Luna is your cute pet companion who keeps you happy and motivated with adorable, positive responses!`;
-                      alert(profile);
-                    } else {
-                      const profile = `Your Luna Profile:\n\n` +
-                        `Age Group: ${userPersonality.ageLabel || 'Wellness'}\n` +
-                        `Tone: ${userPersonality.tone || 'Adaptive'}\n` +
-                        `Language: ${userPersonality.language || 'English'}\n` +
-                        `Approach: ${userPersonality.approach || 'Supportive'}\n` +
-                        `Cultural Context: ${userPersonality.culturalContext?.culture || 'Wellness'}\n` +
-                        `Values: ${userPersonality.culturalContext?.values?.join(', ') || 'Support, Growth, Wellness'}\n\n` +
-                        `Luna is adapting her personality to match your ${userPersonality.ageLabel || 'Wellness'} experience and ${userPersonality.culturalContext?.culture || 'Wellness'} cultural background.`;
-                      alert(profile);
-                    }
+                    const profile = `Your Luna Profile:\n\n` +
+                      `Age Group: ${userPersonality.ageLabel || 'Wellness'}\n` +
+                      `Tone: ${userPersonality.tone || 'Adaptive'}\n` +
+                      `Language: ${userPersonality.language || 'English'}\n` +
+                      `Approach: ${userPersonality.approach || 'Supportive'}\n` +
+                      `Cultural Context: ${userPersonality.culturalContext?.culture || 'Wellness'}\n` +
+                      `Values: ${userPersonality.culturalContext?.values?.join(', ') || 'Support, Growth, Wellness'}\n\n` +
+                      `Luna is adapting her personality to match your ${userPersonality.ageLabel || 'Wellness'} experience and ${userPersonality.culturalContext?.culture || 'Wellness'} cultural background.`;
+                    alert(profile);
                   }
                 }}
               >
@@ -706,8 +666,7 @@ export default function App() {
                 </Text>
                 {userPersonality && (
                   <Text style={styles.userNameSubtext}>
-                    {userPersonality.mode === 'pet' ? '🐾 Pet Mode' :
-                     userPersonality.ageLabel ? `${userPersonality.ageLabel} • ${userPersonality.culturalContext?.culture || 'Wellness'} • (tap to reset, long-press for profile)` :
+                    {userPersonality.ageLabel ? `${userPersonality.ageLabel} • ${userPersonality.culturalContext?.culture || 'Wellness'} • (tap to reset, long-press for profile)` :
                      'Wellness Mode • (tap to reset, long-press for profile)'}
                   </Text>
                 )}
@@ -723,18 +682,8 @@ export default function App() {
               sentimentConfidence={conversationSentiment.confidence}
             />
             
-            {/* Mode and Reset Buttons */}
+            {/* Reset Button */}
             <View style={styles.headerButtonsContainer}>
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={() => {
-                  setShowModeSelection(true);
-                  setShowWelcome(false);
-                }}
-              >
-                <Text style={styles.headerButtonText}>🔄 Mode</Text>
-              </TouchableOpacity>
-              
               <TouchableOpacity 
                 style={[styles.headerButton, styles.resetButton]}
                 onPress={() => {
