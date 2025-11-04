@@ -150,13 +150,14 @@ Your personality:
 
       console.log('🤖 Calling Gemini API with', conversationParts.length, 'conversation turns...');
 
+        // Use faster gemini-2.5-flash model (2-3x faster than pro)
         const geminiResponse = await axios.post(
-        'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
         {
           contents: conversationParts,
           generationConfig: {
             temperature: 0.6,
-            maxOutputTokens: 1024,
+            maxOutputTokens: 800, // Increased from 640 to prevent cutoffs (still fast)
             topP: 0.9,
             topK: 40
           }
@@ -176,12 +177,12 @@ Your personality:
         console.log('⚠️ Empty/Truncated response detected. Retrying with reduced context and higher token cap...');
         const reducedContext = conversationParts.slice(-6); // keep last 6 turns
         const retryResponse = await axios.post(
-          'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
+          'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
           {
             contents: reducedContext,
             generationConfig: {
               temperature: 0.6,
-              maxOutputTokens: 1536,
+              maxOutputTokens: 1024, // Increased to ensure complete responses on retry
               topP: 0.9,
               topK: 40
             }
@@ -197,39 +198,46 @@ Your personality:
 
       if (aiReplyText) {
         const mood = detectMoodFromMessage(message);
-        // Update rolling summary every few turns
-        try {
-          if (conversationHistory.length >= 6) {
-            const toSummarize = conversationHistory.slice(-8).map(m => `${m.sender}: ${m.text}`).join('\n');
-            const summaryPrompt = `Update this running conversation summary in 2-3 sentences, keeping key facts, emotions, and goals.\n\nExisting summary: ${existingSummary || '(none)'}\n\nRecent turns:\n${toSummarize}`;
-            const summaryResp = await axios.post(
-              'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-pro:generateContent?key=' + process.env.GEMINI_API_KEY,
-              {
-                contents: [{ role: 'user', parts: [{ text: summaryPrompt }] }],
-                generationConfig: {
-                  temperature: 0.3,
-                  maxOutputTokens: 180
-                }
-              },
-              { headers: { 'Content-Type': 'application/json' } }
-            );
-            const newSummary = summaryResp?.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-            if (newSummary) {
-              userSummaries.set(userKey, newSummary);
-              saveSummariesToDisk();
-            }
-          }
-        } catch (e) {
-          console.log('Summary update skipped:', e?.message);
-        }
-        console.log('✅ Gemini API successful');
-        return res.json({ 
+        
+        // Send response immediately, update summary asynchronously (non-blocking)
+        const response = { 
           reply: aiReplyText.trim(), 
           mood: mood,
           conversationCount: conversationHistory.length + 1,
           relationship: 'acquainted',
           mode: 'buddy'
-        });
+        };
+        
+        // Update rolling summary asynchronously (fire-and-forget) - doesn't block response
+        if (conversationHistory.length >= 6) {
+          (async () => {
+            try {
+              const toSummarize = conversationHistory.slice(-8).map(m => `${m.sender}: ${m.text}`).join('\n');
+              const summaryPrompt = `Update this running conversation summary in 2-3 sentences, keeping key facts, emotions, and goals.\n\nExisting summary: ${existingSummary || '(none)'}\n\nRecent turns:\n${toSummarize}`;
+              const summaryResp = await axios.post(
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
+                {
+                  contents: [{ role: 'user', parts: [{ text: summaryPrompt }] }],
+                  generationConfig: {
+                    temperature: 0.3,
+                    maxOutputTokens: 150 // Reduced for faster summary generation
+                  }
+                },
+                { headers: { 'Content-Type': 'application/json' } }
+              );
+              const newSummary = summaryResp?.data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+              if (newSummary) {
+                userSummaries.set(userKey, newSummary);
+                saveSummariesToDisk();
+              }
+            } catch (e) {
+              console.log('Summary update skipped:', e?.message);
+            }
+          })();
+        }
+        
+        console.log('✅ Gemini API successful');
+        return res.json(response);
       }
 
       // If still no text, fall back to a graceful empathetic response
