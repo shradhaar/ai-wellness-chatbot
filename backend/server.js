@@ -20,6 +20,10 @@ const userSummaries = new Map();
 // Simple file-based persistence for summaries
 const dataDir = path.join(__dirname, 'data');
 const summariesFile = path.join(dataDir, 'summaries.json');
+const conversationsFile = path.join(dataDir, 'conversations.json');
+
+// Store full conversation history per user (optional - for cross-device sync)
+const userConversations = new Map();
 
 function loadSummariesFromDisk() {
   try {
@@ -42,6 +46,32 @@ function saveSummariesToDisk() {
     fs.writeFileSync(summariesFile, JSON.stringify(obj, null, 2), 'utf-8');
   } catch (e) {
     console.log('Failed to save summaries:', e.message);
+  }
+}
+
+// Load conversation history from disk
+function loadConversationsFromDisk() {
+  try {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    if (fs.existsSync(conversationsFile)) {
+      const raw = fs.readFileSync(conversationsFile, 'utf-8');
+      const obj = JSON.parse(raw || '{}');
+      Object.entries(obj).forEach(([k, v]) => userConversations.set(k, v));
+      console.log('💬 Loaded conversations from disk:', userConversations.size, 'users');
+    }
+  } catch (e) {
+    console.log('Failed to load conversations:', e.message);
+  }
+}
+
+// Save conversation history to disk
+function saveConversationsToDisk() {
+  try {
+    if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir);
+    const obj = Object.fromEntries(userConversations.entries());
+    fs.writeFileSync(conversationsFile, JSON.stringify(obj, null, 2), 'utf-8');
+  } catch (e) {
+    console.log('Failed to save conversations:', e.message);
   }
 }
 
@@ -99,7 +129,11 @@ Your personality:
 - Adapt your tone to match the user's age and emotional state
 - For teenagers, be relatable and understanding
 - Show deep empathy for loss, grief, or difficult emotions
-- Keep responses conversational, natural, and under 150 words
+- PRIORITIZE SHORTER, CONCISE RESPONSES (aim for 50-150 words when possible)
+- However, if the topic requires more detail (like serious health concerns, complex emotional issues, or important information), you may write longer responses
+- CRITICAL: NEVER cut off mid-sentence or mid-thought. Always complete your full response, even if it means writing more
+- If you need to provide a longer response, make sure it has a clear beginning, middle, and end
+- Always end with proper punctuation (period, question mark, or exclamation)
 - Always ask a relevant follow-up question to continue the conversation
 - Remember previous parts of the conversation and reference them naturally
 - Be supportive, non-judgmental, and encouraging`;
@@ -150,16 +184,47 @@ Your personality:
 
       console.log('🤖 Calling Gemini API with', conversationParts.length, 'conversation turns...');
 
-        // Use faster gemini-2.5-flash model (2-3x faster than pro)
-        const geminiResponse = await axios.post(
+      // Helper function to detect if response is truncated
+      const isTruncated = (text, finishReason) => {
+        if (!text) return true;
+        if (finishReason === 'MAX_TOKENS') return true;
+        
+        const trimmed = text.trim();
+        
+        // Check if it ends mid-word (very clear sign of truncation)
+        if (trimmed.length > 0) {
+          const lastChar = trimmed[trimmed.length - 1];
+          const secondLastChar = trimmed.length > 1 ? trimmed[trimmed.length - 2] : '';
+          
+          // Ends with a letter followed by nothing (mid-word cut)
+          if (/[a-zA-Z]/.test(lastChar) && !/[a-zA-Z0-9]/.test(secondLastChar) && trimmed.length > 100) {
+            // More likely to be truncated if it's a longer response ending abruptly
+            return true;
+          }
+          
+          // Check if it ends with incomplete common phrases (like "It sounds")
+          const lastFewWords = trimmed.split(/\s+/).slice(-2).join(' ').toLowerCase();
+          const incompletePhrases = ['it sounds', 'it seems', 'i think', 'you might', 'perhaps you', 'maybe you'];
+          if (incompletePhrases.some(phrase => lastFewWords === phrase) && trimmed.length > 150) {
+            // Likely truncated if it ends with an incomplete phrase and is reasonably long
+            return true;
+          }
+        }
+        
+        return false;
+      };
+
+      // Use faster gemini-2.5-flash model with higher token limit to prevent cutoffs
+      const geminiResponse = await axios.post(
         'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
         {
           contents: conversationParts,
           generationConfig: {
             temperature: 0.6,
-            maxOutputTokens: 800, // Increased from 640 to prevent cutoffs (still fast)
+            maxOutputTokens: 4096, // Increased to 4096 to allow longer complete responses when needed
             topP: 0.9,
-            topK: 40
+            topK: 40,
+            stopSequences: [] // Don't stop early
           }
         },
         {
@@ -171,20 +236,32 @@ Your personality:
 
       const firstCandidate = geminiResponse?.data?.candidates?.[0];
       let aiReplyText = firstCandidate?.content?.parts?.[0]?.text || '';
+      const finishReason = firstCandidate?.finishReason || 'UNKNOWN';
 
-      // If the model hit token limit or returned an empty text, retry once with a shorter context and higher token cap
-      if (!aiReplyText || firstCandidate?.finishReason === 'MAX_TOKENS') {
-        console.log('⚠️ Empty/Truncated response detected. Retrying with reduced context and higher token cap...');
+      console.log(`📝 Response received: ${aiReplyText.length} chars, finishReason: ${finishReason}`);
+
+      // Check if response is truncated and retry with more tokens
+      if (!aiReplyText || isTruncated(aiReplyText, finishReason) || finishReason === 'MAX_TOKENS') {
+        console.log('⚠️ Truncated response detected. Retrying with reduced context and maximum token cap...');
         const reducedContext = conversationParts.slice(-6); // keep last 6 turns
+        
+        // Add explicit instruction to complete the response
+        const completionInstruction = {
+          role: 'user',
+          parts: [{ text: 'IMPORTANT: Complete your full response. Do not cut off mid-sentence. Finish your thought completely with proper punctuation.' }]
+        };
+        const contextWithInstruction = [...reducedContext, completionInstruction];
+        
         const retryResponse = await axios.post(
           'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + process.env.GEMINI_API_KEY,
           {
-            contents: reducedContext,
+            contents: contextWithInstruction,
             generationConfig: {
               temperature: 0.6,
-              maxOutputTokens: 1024, // Increased to ensure complete responses on retry
+              maxOutputTokens: 6144, // Maximum for flash model (8192 is max, but 6144 is safer)
               topP: 0.9,
-              topK: 40
+              topK: 40,
+              stopSequences: []
             }
           },
           {
@@ -193,7 +270,29 @@ Your personality:
             }
           }
         );
-        aiReplyText = retryResponse?.data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        const retryCandidate = retryResponse?.data?.candidates?.[0];
+        const retryText = retryCandidate?.content?.parts?.[0]?.text || '';
+        const retryFinishReason = retryCandidate?.finishReason || 'UNKNOWN';
+        
+        console.log(`🔄 Retry response: ${retryText.length} chars, finishReason: ${retryFinishReason}`);
+        
+        // Use retry response if it's better (longer and complete)
+        if (retryText && retryText.length > aiReplyText.length) {
+          aiReplyText = retryText;
+        } else if (retryText && !isTruncated(retryText, retryFinishReason)) {
+          aiReplyText = retryText;
+        } else if (retryText) {
+          // Retry didn't help much, but use it if original was empty
+          if (!aiReplyText) {
+            aiReplyText = retryText;
+          }
+        }
+      }
+      
+      // Final check: if response still seems incomplete, add a note
+      if (aiReplyText && isTruncated(aiReplyText, finishReason)) {
+        console.warn('⚠️ Response may still be incomplete after retry');
+        // Don't add anything to the response, just log it
       }
 
       if (aiReplyText) {
@@ -296,8 +395,81 @@ app.get('/welcome', (req, res) => {
   });
 });
 
+// Optional: Save conversation history to backend (for cross-device sync)
+app.post('/conversations/save', (req, res) => {
+  try {
+    const { userId, sessionId, conversationHistory } = req.body;
+    
+    if (!userId || !sessionId) {
+      return res.status(400).json({ error: 'userId and sessionId are required' });
+    }
+
+    const userKey = userId;
+    if (!userConversations.has(userKey)) {
+      userConversations.set(userKey, {});
+    }
+
+    const userSessions = userConversations.get(userKey);
+    userSessions[sessionId] = {
+      sessionId,
+      history: conversationHistory || [],
+      lastUpdated: new Date().toISOString(),
+      messageCount: conversationHistory ? conversationHistory.length : 0
+    };
+
+    // Save to disk asynchronously
+    saveConversationsToDisk();
+
+    res.json({ success: true, message: 'Conversation saved' });
+  } catch (error) {
+    console.error('Error saving conversation:', error);
+    res.status(500).json({ error: 'Failed to save conversation' });
+  }
+});
+
+// Optional: Load conversation history from backend
+app.get('/conversations/:userId', (req, res) => {
+  try {
+    const { userId } = req.params;
+    const userKey = userId;
+
+    if (!userConversations.has(userKey)) {
+      return res.json({ sessions: {} });
+    }
+
+    const userSessions = userConversations.get(userKey);
+    res.json({ sessions: userSessions });
+  } catch (error) {
+    console.error('Error loading conversations:', error);
+    res.status(500).json({ error: 'Failed to load conversations' });
+  }
+});
+
+// Optional: Load specific session from backend
+app.get('/conversations/:userId/:sessionId', (req, res) => {
+  try {
+    const { userId, sessionId } = req.params;
+    const userKey = userId;
+
+    if (!userConversations.has(userKey)) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userSessions = userConversations.get(userKey);
+    if (!userSessions[sessionId]) {
+      return res.status(404).json({ error: 'Session not found' });
+    }
+
+    res.json({ session: userSessions[sessionId] });
+  } catch (error) {
+    console.error('Error loading session:', error);
+    res.status(500).json({ error: 'Failed to load session' });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Luna Wellness Chatbot (Buddy Mode) running on port ${PORT}`);
-  // Load summaries at startup
+  // Load summaries and conversations at startup
   loadSummariesFromDisk();
+  loadConversationsFromDisk();
 });

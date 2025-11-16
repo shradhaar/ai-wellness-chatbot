@@ -9,10 +9,13 @@ import {
   SafeAreaView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
+  Pressable,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import LottieAvatar from './components/LottieAvatar';
 import { saveMood, getMoodHistory } from './storage/moodStorage';
+import { saveChatHistory, loadChatHistory, getCurrentSessionId, createNewSession, getAllSessions, switchToSession, deleteSession, clearAllChatHistory } from './storage/chatHistoryStorage';
 import { getContextualReflectionPrompt, resetReflectionPrompts, getReflectionStatus, getRotationVisual, getEmotionalReflectionPrompt, forceRefreshPrompts, getDynamicReflectionOptions } from './utils/reflectionPrompts';
 import { generateUserPersonality, getConversationStarters } from './utils/personalityAdapter';
 
@@ -33,6 +36,9 @@ export default function App() {
   const [showMoodSelection, setShowMoodSelection] = useState(false);
   const [selectedMode, setSelectedMode] = useState(null);
   const [showModeSelection, setShowModeSelection] = useState(false);
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [showSessionsList, setShowSessionsList] = useState(false);
+  const [chatSessions, setChatSessions] = useState([]);
 
   // Function to save user data to storage
   const saveUserData = async (name, age, gender, location) => {
@@ -63,12 +69,21 @@ export default function App() {
   // Function to clear saved user data (for testing)
   const clearSavedUserData = async () => {
     try {
+      // Close sessions list if open
+      setShowSessionsList(false);
+      
+      // Clear all user data from AsyncStorage
       await AsyncStorage.removeItem('userName');
       await AsyncStorage.removeItem('userAge');
       await AsyncStorage.removeItem('userGender');
       await AsyncStorage.removeItem('userLocation');
       await AsyncStorage.removeItem('userId');
       await AsyncStorage.removeItem('selectedMode');
+      
+      // Clear all chat history and sessions
+      await clearAllChatHistory();
+      
+      // Reset all state
       setUserName('');
       setUserAge('');
       setUserGender('');
@@ -77,13 +92,26 @@ export default function App() {
       setUserId('');
       setSelectedMode(null);
       setShowModeSelection(false);
-      setShowWelcome(true);
-      setWelcomeStep(0);
       setChatHistory([]);
+      setChatSessions([]);
+      setCurrentSessionId(null);
+      setCurrentMood('neutral');
+      
+      // Show welcome screen - MUST be set last to ensure it's visible
+      setWelcomeStep(0);
+      setShowWelcome(true);
+      
       // Reset reflection prompts for fresh conversation
       resetReflectionPrompts();
+      
+      console.log('✅ User data cleared - returned to onboarding screen');
     } catch (error) {
       console.error('Error clearing user data:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to reset. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to reset. Please try again.');
+      }
     }
   };
 
@@ -93,10 +121,99 @@ export default function App() {
       await loadWelcomeInfo();
       await generateUserId();
       await loadSavedUserData();
+      await loadChatHistoryFromStorage();
+      await loadSessionsList();
     };
     
     initializeApp();
   }, []);
+
+  // Load chat history from storage on app startup (only if user is already set up)
+  const loadChatHistoryFromStorage = async () => {
+    try {
+      // Only load history if user has completed onboarding
+      const savedData = await loadUserData();
+      if (!savedData.name) {
+        // User hasn't completed onboarding yet, don't load history
+        console.log('⏭️ Skipping chat history load - user not onboarded yet');
+        return;
+      }
+
+      const sessionId = await getCurrentSessionId();
+      if (sessionId) {
+        setCurrentSessionId(sessionId);
+        const history = await loadChatHistory(sessionId);
+        if (history && history.length > 0) {
+          // Convert timestamp strings back to Date objects if needed
+          const processedHistory = history.map(msg => ({
+            ...msg,
+            timestamp: msg.timestamp instanceof Date ? msg.timestamp : new Date(msg.timestamp)
+          }));
+          setChatHistory(processedHistory);
+          console.log('✅ Loaded chat history on page reload:', processedHistory.length, 'messages');
+        } else {
+          console.log('ℹ️ No chat history found for current session');
+        }
+      } else {
+        // Create a new session if none exists
+        const newSessionId = await createNewSession();
+        setCurrentSessionId(newSessionId);
+        console.log('✅ Created new chat session:', newSessionId);
+      }
+    } catch (error) {
+      console.error('❌ Error loading chat history:', error);
+    }
+  };
+
+  // Load list of all sessions
+  const loadSessionsList = async () => {
+    try {
+      const sessions = await getAllSessions();
+      setChatSessions(sessions);
+    } catch (error) {
+      console.error('Error loading sessions list:', error);
+    }
+  };
+
+  // Save chat history to storage whenever it changes
+  useEffect(() => {
+    const saveHistory = async () => {
+      if (chatHistory.length > 0 && currentSessionId) {
+        try {
+          await saveChatHistory(chatHistory, currentSessionId);
+          // Refresh sessions list to update metadata
+          await loadSessionsList();
+          console.log('💾 Auto-saved chat history:', chatHistory.length, 'messages');
+        } catch (error) {
+          console.error('❌ Error saving chat history:', error);
+        }
+      }
+    };
+
+    // Debounce saves to avoid too frequent writes (but save immediately on page unload)
+    const timeoutId = setTimeout(saveHistory, 500);
+    
+    // Also save immediately when page is about to unload (for reliability)
+    const handleBeforeUnload = () => {
+      if (chatHistory.length > 0 && currentSessionId) {
+        saveChatHistory(chatHistory, currentSessionId).catch(err => 
+          console.error('Error saving on unload:', err)
+        );
+      }
+    };
+    
+    // For web: use beforeunload event
+    if (typeof window !== 'undefined') {
+      window.addEventListener('beforeunload', handleBeforeUnload);
+    }
+    
+    return () => {
+      clearTimeout(timeoutId);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+      }
+    };
+  }, [chatHistory, currentSessionId]);
 
   const loadSavedUserData = async () => {
     const savedData = await loadUserData();
@@ -220,9 +337,14 @@ export default function App() {
     }
     
     console.log('Setting showWelcome to false');
-    setShowWelcome(false);
-    // Reset reflection prompts for new conversation
-    resetReflectionPrompts();
+      setShowWelcome(false);
+      // Reset reflection prompts for new conversation
+      resetReflectionPrompts();
+      
+      // Create a new chat session for this conversation
+      const newSessionId = await createNewSession();
+      setCurrentSessionId(newSessionId);
+      setChatHistory([]);
   };
 
   const sendMessage = async () => {
@@ -264,9 +386,19 @@ export default function App() {
         mood: data.mood
       };
       
-      setChatHistory(prev => [...prev, userMessage, botMessage]);
+      const updatedHistory = [...chatHistory, userMessage, botMessage];
+      setChatHistory(updatedHistory);
       setCurrentMood(data.mood);
       await saveMood(data.mood, currentMessage, data.reply);
+      
+      // Ensure session exists before saving
+      if (!currentSessionId) {
+        const newSessionId = await createNewSession();
+        setCurrentSessionId(newSessionId);
+      }
+      
+      // Save chat history (will be auto-saved by useEffect, but save immediately for reliability)
+      await saveChatHistory(updatedHistory, currentSessionId);
       
     } catch (error) {
       console.error('Error sending message:', error);
@@ -373,9 +505,19 @@ export default function App() {
         timestamp: new Date(), 
         mood: data.mood 
       };
-      setChatHistory(prev => [...prev, botMessage]);
+      const updatedHistory = [...chatHistory, botMessage];
+      setChatHistory(updatedHistory);
       setCurrentMood(data.mood);
       await saveMood(data.mood, `I'm feeling ${mood}`, data.reply);
+      
+      // Ensure session exists before saving
+      if (!currentSessionId) {
+        const newSessionId = await createNewSession();
+        setCurrentSessionId(newSessionId);
+      }
+      
+      // Save chat history
+      await saveChatHistory(updatedHistory, currentSessionId);
     } catch (error) {
       console.error('Error sending mood message:', error);
       const errorMessage = { 
@@ -416,6 +558,118 @@ export default function App() {
     }
   }, [chatHistory, message]);
   
+  // Session management functions
+  const handleNewSession = async () => {
+    try {
+      // Save current session before switching
+      if (chatHistory.length > 0 && currentSessionId) {
+        await saveChatHistory(chatHistory, currentSessionId);
+      }
+      
+      // Create new session
+      const newSessionId = await createNewSession();
+      setCurrentSessionId(newSessionId);
+      setChatHistory([]);
+      await loadSessionsList();
+      setShowSessionsList(false);
+    } catch (error) {
+      console.error('Error creating new session:', error);
+    }
+  };
+
+  const handleSwitchSession = async (sessionId) => {
+    try {
+      // Save current session before switching
+      if (chatHistory.length > 0 && currentSessionId) {
+        await saveChatHistory(chatHistory, currentSessionId);
+      }
+      
+      // Load the selected session
+      const history = await switchToSession(sessionId);
+      setCurrentSessionId(sessionId);
+      setChatHistory(history);
+      setShowSessionsList(false);
+    } catch (error) {
+      console.error('Error switching session:', error);
+    }
+  };
+
+  const handleDeleteSession = async (sessionId) => {
+    try {
+      console.log('🗑️ handleDeleteSession called with sessionId:', sessionId);
+      
+      // For web, use window.confirm as fallback if Alert doesn't work
+      if (Platform.OS === 'web') {
+        const confirmed = window.confirm('Are you sure you want to delete this conversation? This cannot be undone.');
+        if (!confirmed) {
+          console.log('❌ Delete cancelled by user');
+          return;
+        }
+        
+        try {
+          console.log('🗑️ Deleting session:', sessionId);
+          await deleteSession(sessionId);
+          await loadSessionsList();
+          
+          // If we deleted the current session, create a new one
+          if (sessionId === currentSessionId) {
+            const newSessionId = await createNewSession();
+            setCurrentSessionId(newSessionId);
+            setChatHistory([]);
+          }
+          
+          console.log('✅ Session deleted successfully:', sessionId);
+        } catch (error) {
+          console.error('❌ Error deleting session:', error);
+          window.alert('Failed to delete session. Please try again.');
+        }
+      } else {
+        // For native, use Alert
+        Alert.alert(
+          'Delete Conversation',
+          'Are you sure you want to delete this conversation? This cannot be undone.',
+          [
+            {
+              text: 'Cancel',
+              style: 'cancel',
+              onPress: () => console.log('❌ Delete cancelled')
+            },
+            {
+              text: 'Delete',
+              style: 'destructive',
+              onPress: async () => {
+                try {
+                  console.log('🗑️ Deleting session:', sessionId);
+                  await deleteSession(sessionId);
+                  await loadSessionsList();
+                  
+                  // If we deleted the current session, create a new one
+                  if (sessionId === currentSessionId) {
+                    const newSessionId = await createNewSession();
+                    setCurrentSessionId(newSessionId);
+                    setChatHistory([]);
+                  }
+                  
+                  console.log('✅ Session deleted successfully:', sessionId);
+                } catch (error) {
+                  console.error('❌ Error deleting session:', error);
+                  Alert.alert('Error', 'Failed to delete session. Please try again.');
+                }
+              }
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error showing delete confirmation:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to show delete confirmation. Please try again.');
+      } else {
+        Alert.alert('Error', 'Failed to show delete confirmation. Please try again.');
+      }
+    }
+  };
+
   // Get the most appropriate emoji based on conversation sentiment (INTERNAL ONLY)
   const getActiveEmoji = () => {
     // If we have a strong sentiment signal, use it for emoji only
@@ -682,14 +936,45 @@ export default function App() {
               sentimentConfidence={conversationSentiment.confidence}
             />
             
-            {/* Reset Button */}
+            {/* Session and Reset Buttons */}
             <View style={styles.headerButtonsContainer}>
+              <TouchableOpacity 
+                style={[styles.headerButton, styles.sessionsButton]}
+                onPress={() => setShowSessionsList(!showSessionsList)}
+              >
+                <Text style={styles.headerButtonText}>💬 Sessions ({chatSessions.length})</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.headerButton, styles.newSessionButton]}
+                onPress={handleNewSession}
+              >
+                <Text style={styles.headerButtonText}>➕ New</Text>
+              </TouchableOpacity>
               <TouchableOpacity 
                 style={[styles.headerButton, styles.resetButton]}
                 onPress={() => {
                   // Show confirmation dialog before resetting
-                  if (confirm('Are you sure you want to reset everything? This will clear all your data and take you back to the onboarding process.')) {
-                    clearSavedUserData();
+                  if (Platform.OS === 'web') {
+                    const confirmed = window.confirm('Are you sure you want to reset everything? This will clear all your data and take you back to the onboarding process.');
+                    if (confirmed) {
+                      clearSavedUserData();
+                    }
+                  } else {
+                    Alert.alert(
+                      'Reset Everything',
+                      'Are you sure you want to reset everything? This will clear all your data and take you back to the onboarding process.',
+                      [
+                        {
+                          text: 'Cancel',
+                          style: 'cancel'
+                        },
+                        {
+                          text: 'Reset',
+                          style: 'destructive',
+                          onPress: clearSavedUserData
+                        }
+                      ]
+                    );
                   }
                 }}
               >
@@ -698,6 +983,76 @@ export default function App() {
             </View>
           </View>
         </View>
+
+        {/* Sessions List Overlay */}
+        {showSessionsList && (
+          <View style={styles.sessionsOverlay}>
+            <View style={styles.sessionsContainer}>
+              <View style={styles.sessionsHeader}>
+                <Text style={styles.sessionsTitle}>Chat Sessions</Text>
+                <TouchableOpacity 
+                  onPress={() => setShowSessionsList(false)}
+                  style={styles.closeButton}
+                >
+                  <Text style={styles.closeButtonText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+              <ScrollView style={styles.sessionsList}>
+                {chatSessions.length === 0 ? (
+                  <Text style={styles.noSessionsText}>No previous conversations</Text>
+                ) : (
+                  chatSessions.map((session) => (
+                    <View 
+                      key={session.id} 
+                      style={[
+                        styles.sessionItem,
+                        session.id === currentSessionId && styles.sessionItemActive
+                      ]}
+                    >
+                      <TouchableOpacity 
+                        style={styles.sessionItemContent}
+                        onPress={() => handleSwitchSession(session.id)}
+                        activeOpacity={0.7}
+                        pointerEvents="box-none"
+                      >
+                        <Text style={styles.sessionTitle} numberOfLines={1}>
+                          {session.title || 'New Conversation'}
+                        </Text>
+                        <Text style={styles.sessionMeta}>
+                          {session.messageCount} messages • {new Date(session.lastUpdated).toLocaleDateString()}
+                        </Text>
+                      </TouchableOpacity>
+                      <View style={styles.deleteButtonContainer}>
+                        <Pressable 
+                          style={({ pressed }) => [
+                            styles.deleteSessionButton,
+                            pressed && styles.deleteSessionButtonPressed
+                          ]}
+                          onPress={() => {
+                            console.log('🗑️ Delete button pressed:', session.id);
+                            handleDeleteSession(session.id);
+                          }}
+                          onPressIn={() => {
+                            console.log('🗑️ Delete button press started');
+                          }}
+                          hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                        >
+                          <Text style={styles.deleteSessionButtonText}>🗑️</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))
+                )}
+              </ScrollView>
+              <TouchableOpacity 
+                style={styles.newSessionButtonLarge}
+                onPress={handleNewSession}
+              >
+                <Text style={styles.newSessionButtonText}>➕ Start New Conversation</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         <ScrollView style={styles.chatContainer} showsVerticalScrollIndicator={false}>
           {chatHistory.length === 0 && (
@@ -1253,15 +1608,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
-    gap: 10,
+    gap: 8,
+    flexWrap: 'wrap',
   },
   headerButton: {
     backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 15,
     borderWidth: 1,
     borderColor: '#0056CC',
+    minWidth: 60,
+  },
+  sessionsButton: {
+    backgroundColor: '#34C759',
+    borderColor: '#28A745',
+  },
+  newSessionButton: {
+    backgroundColor: '#FF9500',
+    borderColor: '#E68900',
   },
   resetButton: {
     backgroundColor: '#FF3B30',
@@ -1269,8 +1634,125 @@ const styles = StyleSheet.create({
   },
   headerButtonText: {
     color: '#fff',
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  sessionsOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  sessionsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    width: '90%',
+    maxHeight: '80%',
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  sessionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  sessionsTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  closeButton: {
+    padding: 5,
+  },
+  closeButtonText: {
+    fontSize: 24,
+    color: '#666',
+  },
+  sessionsList: {
+    maxHeight: 400,
+    marginBottom: 15,
+  },
+  sessionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 15,
+    marginBottom: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  sessionItemActive: {
+    backgroundColor: '#E3F2FD',
+    borderColor: '#007AFF',
+    borderWidth: 2,
+  },
+  sessionItemContent: {
+    flex: 1,
+  },
+  sessionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 5,
+  },
+  sessionMeta: {
+    fontSize: 12,
+    color: '#666',
+  },
+  deleteButtonContainer: {
+    marginLeft: 10,
+    zIndex: 10,
+    elevation: 3,
+  },
+  deleteSessionButton: {
+    padding: 12,
+    minWidth: 44,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#FFEBEE',
+  },
+  deleteSessionButtonPressed: {
+    backgroundColor: '#FFCDD2',
+    transform: [{ scale: 0.95 }],
+  },
+  deleteSessionButtonText: {
+    fontSize: 20,
+  },
+  noSessionsText: {
+    textAlign: 'center',
+    color: '#999',
+    fontSize: 16,
+    padding: 20,
+  },
+  newSessionButtonLarge: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  newSessionButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 }); 
